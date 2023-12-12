@@ -29,11 +29,14 @@ Channel.value(data_release).set { ch_data_release }
 Channel.value(params.variant_type).set { ch_variant_type }
 Channel.value(params.is_cloud).set { ch_is_cloud }
 
-ch_sample_file = params.sample_file ? Channel.fromPath(params.sample_file) : []
-
 Channel.fromPath(params.region_file).set { ch_region_file }
+ch_sample_file = params.sample_file ? Channel.fromFilePairs(params.sample_file, tuple(2)) : Channel.empty()
+
+
+
 
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
+include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
 include { AGGREGATE_INPUT } from "../modules/local/aggregate_input/aggregate_input.nf"
 include { RUN_TOOLS } from "../modules/local/run_tools/run_tools.nf"
@@ -46,24 +49,30 @@ workflow SOMATIC_DISCOVERY {
         ch_region_file,
         ch_sample_file,
         ch_is_cloud
-        ch_data_release,
-
+        // ch_data_release,
     )
 
     // index the vcf files for easy filtering.
-    INDEX_VCFS(
-
+    // loop over the vcf paths in the ch_sample_file.
+    // symlink those to /re_scratch/ temp dir
+    // create a new ch_sl_sample_file to capture the indexed files.
+    sl_paths = INDEX_VCFS(
+        ch_sample_file,
     )
 
-    // using the region file and variant type to limit the
+    // we can use this step to filter apply additional filtering / QC steps to variants / regions of interest
     // variants included.
-    VARIANT_FILTER(
-
-    )
+    // VARIANT_FILTER(
+    //     ch_variant_type,
+    //     ch_sample_file,
+    //     ch_region_file,
+    //     ch_is_cloud,
+    //     symlink_tmp_dir
+    // )
 
     // create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
     AGGREGATE_INPUT(
-
+        sl_paths
     )
 
     // split different tools here? or one workflow that contains the three tools?

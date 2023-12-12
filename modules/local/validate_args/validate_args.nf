@@ -11,9 +11,8 @@ process VALIDATE_ARGS {
     path(sample_file)
     path(region_file)
     val(is_cloud)
-    val(data_release)
-    val(genome_build)
-    val(cnv_pass_only)
+    // val(data_release)
+
 
     output:
     path "versions.yml", emit : ch_versions_validate_args
