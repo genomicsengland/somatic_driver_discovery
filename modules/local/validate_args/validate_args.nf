@@ -2,14 +2,14 @@ process VALIDATE_ARGS {
     /*
     Check the validity of parameter arguments
     */
-    def s = params.sample_file == null ? "No input file. Default LabKey query" : params.sample_file
-    def q = params.input_type == 'gene' ? 'gene' : 'region'
+    def s = params.sample_file == null ? "No input file provided. " : params.sample_file
+    def q = params.variant_type == 'coding' ? 'coding' : 'non-coding'
     tag "${q} file: ${input_file}, sample file: ${s}"
 
     input:
     val(variant_type)
-    path(sample_file)
-    path(region_file)
+    val(sample_file)
+    val(region_file)
     val(is_cloud)
     // val(data_release)
 
@@ -19,6 +19,7 @@ process VALIDATE_ARGS {
 
     script:
     """
+    echo 'HERE'
     set -eoux pipefail
 
     validate_args.py \

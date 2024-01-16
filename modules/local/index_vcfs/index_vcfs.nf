@@ -9,10 +9,10 @@ process INDEX_VCFS {
     //     Channel.value(symlink_tmp_dir).set  { "${params.tmpdir}/${runId}/symlink_tmp" }
     // }
     input:
-    tuple val(sample_path), val(sample_name) from ch_sample_file
+    tuple val(sample_path), val(sample_name) from ch_sample_chunk
 
     output:
-    file "symlinked_files/*" into symlinked_files
+    tuple file(symlinked_file), val(sample_name) into symlinked_files
     // do we need this? the index should just be in the same dir. But we aren't touching it. 
     
     workDir "${params.tmpDir}/${runId}/"
@@ -24,16 +24,20 @@ process INDEX_VCFS {
     """
     work_dir="${params.tmpDir}/${runId}/"
     mkdir -p ${work_dir}
-    # Change into the work directory
-    cd $work_dir
+
+
+    for tuple in \${sample_path}
+    do
+        # Extracting the filename without the path
+        filename=${basename "\${tuple[0]}"} 
+
+        # Create symlink in the work directory
+        ln -s "\${tuple[0]}" "$work_dir/$filename"
+
+       bcftools index -t "$work_dir/$filename"
     
-    # Extracting the filename without the path
-    filename=$(basename "$sample_path")
-
-    # Create symlink in the work directory
-    ln -s $sample_path $filename
-
-    bcftools index -t $filename
+        # Emit the sample name and symlinked file path as a channel
+        echo "\${tuple[1]} $work_dir/$filename" | emit
+    done
     """
-
 }

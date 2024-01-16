@@ -36,9 +36,10 @@ if (params.help){
     System.exit(0)
 }
 
-
-
 include { SOMATIC_DISCOVERY } from "./workflows/somatic_discovery.nf"
+
 workflow {
-    SOMATIC_DISCOVERY
+    log.info "------------------- starting workflow -------------------"
+    SOMATIC_DISCOVERY()
+    log.info "------------------- completed SOMATIC_DISCOVERY ------------------"
 }

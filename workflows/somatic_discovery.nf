@@ -13,7 +13,6 @@ log.info """\
     output directory : ${params.outdir}
     command          : ${workflow.commandLine}
 
-    WARNING: Canvas CNV calls use Illumina-derived sex chromosome karyotype. In rare cases, we have found these to be inconsistent with GEL-derived coverage-based sex chromosome karyotype. When the sex chromosome karyotype is inconsistent, CNV calls on sex chromosomes will be wrong. See documentation for full details.
 
     """.stripIndent()
 
@@ -29,37 +28,52 @@ Channel.value(data_release).set { ch_data_release }
 Channel.value(params.variant_type).set { ch_variant_type }
 Channel.value(params.is_cloud).set { ch_is_cloud }
 
-Channel.fromPath(params.region_file).set { ch_region_file }
-ch_sample_file = params.sample_file ? Channel.fromFilePairs(params.sample_file, tuple(2)) : Channel.empty()
+Channel.value(params.region_file).set { ch_region_file }
+ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
+// ch_sample_file = params.sample_file ? Channel.fromFilePairs(params.sample_file, tuple(2)) : Channel.empty()
 
 
 
 
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
-include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
+// include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
 include { AGGREGATE_INPUT } from "../modules/local/aggregate_input/aggregate_input.nf"
-include { RUN_TOOLS } from "../modules/local/run_tools/run_tools.nf"
-include { COMBINE_OUTPUT} from "../modules/local/combine_output/combine_output.nf"
+// include { RUN_TOOLS } from "../modules/local/run_tools/run_tools.nf"
+// include { COMBINE_OUTPUT} from "../modules/local/combine_output/combine_output.nf"
 
 workflow SOMATIC_DISCOVERY {
+   
+
+    // Print the value of a parameter
+    println("Sample file parameter: ${params.sample_file}")
+
+    // Assuming you have a variable 'sample_file'
+    println("Sample file variable: ${sample_file}")
+    println("Sample file variable: ${ch_sample_file}")
+
     // check if the paths and files are correctly provided.
     VALIDATE_ARGS(
         ch_variant_type,
-        ch_region_file,
         ch_sample_file,
+        ch_region_file,
         ch_is_cloud
-        // ch_data_release,
     )
+    log.info "Completed validation of arguments."
+
+
+    ch_sample_file.groupTuple(50) // Group the ch_sample_file in chunks of 50 tuples
+        .into { groupedSamples }
+    
 
     // index the vcf files for easy filtering.
     // loop over the vcf paths in the ch_sample_file.
     // symlink those to /re_scratch/ temp dir
-    // create a new ch_sl_sample_file to capture the indexed files.
-    sl_paths = INDEX_VCFS(
-        ch_sample_file,
-    )
-
+    // Process each chunk of 50 tuples through INDEX_VCFS
+    indexed_files = groupedSamples.map { chunk ->
+        INDEX_VCFS(chunk)
+    }.flatten()
+    log.info "Completed indexing of vcf."
     // we can use this step to filter apply additional filtering / QC steps to variants / regions of interest
     // variants included.
     // VARIANT_FILTER(
@@ -76,13 +90,9 @@ workflow SOMATIC_DISCOVERY {
     )
 
     // split different tools here? or one workflow that contains the three tools?
-    RUN_TOOLS(
-
-    )
+    //RUN_TOOLS()
 
     // combine the outputs of the different tools
-    COMBINE_OUTPUT(
-
-    )
+    //COMBINE_OUTPUT()
 }
 

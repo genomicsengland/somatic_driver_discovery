@@ -17,7 +17,7 @@ def validate_args(
     region_file,
     sample_file,
     is_cloud,
-):
+    ):
     """
     validate arguments used in the workflow
 
@@ -31,6 +31,7 @@ def validate_args(
     check_sample_file_provided(is_cloud, sample_file)
     check_region_columns(region_file)
     check_chromosome_notation_in_bed(region_file)
+    print('----- Arguments validated -----')
 
 
 def check_variant_type_value(variant_type):
@@ -94,7 +95,7 @@ def check_chromosome_notation_in_bed(region_file):
 
 def check_sample_file_provided(sample_file):
     """
-    Check that sample file is provided if running in CloudOS
+    Check that sample file is provided, and that it contains two columns.
     """
     if not bool(sample_file):
         error_message = textwrap.dedent(
@@ -105,6 +106,11 @@ def check_sample_file_provided(sample_file):
         Please provide a `sample_file`.
         """
         )
+        print(error_message)
+        exit(1)
+
+    samps = read_csv(sample_file)
+    if samps.shape[1] != 2:
         print(error_message)
         exit(1)
 
