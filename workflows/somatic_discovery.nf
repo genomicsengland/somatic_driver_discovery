@@ -34,7 +34,7 @@ ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.n
 
 
 
-include { INGEST_SAMPLEFILE } from "../modules/local/ingest_samplefile.nf/ingest_samplefile.nf"
+include { INGEST_SAMPLEFILE } from "../modules/local/ingest_samplefile/ingest_samplefile.nf"
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 // include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
@@ -66,7 +66,7 @@ workflow SOMATIC_DISCOVERY {
         sample_file
     )
     println("${ch_samples}")
-    
+
     ch_samples.groupTuple(50) // Group the ch_sample_file in chunks of 50 tuples
         .into { groupedSamples }
     
