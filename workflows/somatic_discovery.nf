@@ -34,7 +34,7 @@ ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.n
 
 
 
-
+include { INGEST_SAMPLEFILE } from "../modules/local/ingest_samplefile.nf/ingest_samplefile.nf"
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 // include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
@@ -55,14 +55,19 @@ workflow SOMATIC_DISCOVERY {
     // check if the paths and files are correctly provided.
     VALIDATE_ARGS(
         ch_variant_type,
-        ch_sample_file,
+        sample_file,
         ch_region_file,
         ch_is_cloud
     )
     log.info "Completed validation of arguments."
 
-
-    ch_sample_file.groupTuple(50) // Group the ch_sample_file in chunks of 50 tuples
+    // ingest the sample file.
+    INGEST_SAMPLEFILE(
+        sample_file
+    )
+    println("${ch_samples}")
+    
+    ch_samples.groupTuple(50) // Group the ch_sample_file in chunks of 50 tuples
         .into { groupedSamples }
     
 
