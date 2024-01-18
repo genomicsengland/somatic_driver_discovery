@@ -50,7 +50,6 @@ workflow SOMATIC_DISCOVERY {
 
     // Assuming you have a variable 'sample_file'
     println("Sample file variable: ${sample_file}")
-    println("Sample file variable: ${ch_sample_file}")
 
     // check if the paths and files are correctly provided.
     VALIDATE_ARGS(
@@ -61,21 +60,34 @@ workflow SOMATIC_DISCOVERY {
     )
     log.info "Completed validation of arguments."
 
+
+    
     // ingest the sample file.
     INGEST_SAMPLEFILE(
         sample_file
     )
-    println("${ch_samples}")
+    ch_ch_samples = INGEST_SAMPLEFILE.out.ch_samples
+    
+    // Apply view for debugging
+    ch_samples.view { item ->
+        println("Sample item: $item")
+    }
+    log.info "Completed ingesting samples."
+    grouped_samples = ch_samples.groupTuple(50) // Group the ch_sample_file in chunks of 50 tuples
 
-    ch_samples.groupTuple(50) // Group the ch_sample_file in chunks of 50 tuples
-        .into { groupedSamples }
+
+    // Use view operator for debugging
+    grouped_samples.view { chunk ->
+        println("Chunk size: ${chunk.size()}")
+    }
+    
     
 
     // index the vcf files for easy filtering.
     // loop over the vcf paths in the ch_sample_file.
     // symlink those to /re_scratch/ temp dir
     // Process each chunk of 50 tuples through INDEX_VCFS
-    indexed_files = groupedSamples.map { chunk ->
+    indexed_files = grouped_samplesForUse.map { chunk ->
         INDEX_VCFS(chunk)
     }.flatten()
     log.info "Completed indexing of vcf."

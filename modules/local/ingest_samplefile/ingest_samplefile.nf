@@ -8,14 +8,14 @@ process INGEST_SAMPLEFILE {
     val(sample_file)
 
     output:
-    tuple val(file_path), val(sample_name) into ch_samples
+    tuple val(file_path), val(sample_name) , emit: ch_samples
     
     script:
     """
-    cat ${sample_file} | while read -r line; do
-        file_path=$(echo $line | cut -f1)
-        sample_name=$(echo $line | cut -f2)
-        echo "$file_path\t$sample_name"
+    cat ${sample_file} | read -r line; do
+        file_path=\$(echo \$line | cut -f1)
+        sample_name=\$(echo \$line | cut -f2)
+        echo "\$file_path\t\$sample_name"
     done
     """
 }
