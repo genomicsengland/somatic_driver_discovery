@@ -63,19 +63,18 @@ workflow SOMATIC_DISCOVERY {
 
     
     // ingest the sample file.
-    INGEST_SAMPLEFILE(
-        sample_file
-    )
-    ch_ch_samples = INGEST_SAMPLEFILE.out.ch_samples
-    
+        ch_samples = Channel
+        .fromPath( ch_sample_file )
+        .splitCsv(sep: '\t', header: false)
+        .map { row -> tuple(row[0], row[1]) }
+    // ch_samples = INGEST_SAMPLEFILE.out.ch_samples
     // Apply view for debugging
     ch_samples.view { item ->
         println("Sample item: $item")
     }
     log.info "Completed ingesting samples."
-    grouped_samples = ch_samples.groupTuple(50) // Group the ch_sample_file in chunks of 50 tuples
 
-
+    grouped_samples = ch_samples.buffer(size: 50) // Group the ch_sample_file in chunks of 50 tuples
     // Use view operator for debugging
     grouped_samples.view { chunk ->
         println("Chunk size: ${chunk.size()}")
