@@ -1,6 +1,15 @@
 nextflow.enable.dsl=2
 
 def sample_file = params.sample_file == null ? "No user-specified sample file." : params.sample_file
+// adding an chunk_id for each.
+
+def addGroupIds(Channel ch) {
+    def counter = 1
+    return ch.map { chunk ->
+        def groupId = counter++
+        return [groupId, chunk]
+    }
+}
 
 log.info """\
 
@@ -27,14 +36,15 @@ if (matcher.find()) {
 Channel.value(data_release).set { ch_data_release }
 Channel.value(params.variant_type).set { ch_variant_type }
 Channel.value(params.is_cloud).set { ch_is_cloud }
+Channel.value(params.bed_file).set { ch_bed_file }  // TODO need to include a check if a different user specified file is provided.
 
 Channel.value(params.region_file).set { ch_region_file }
 ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
-// ch_sample_file = params.sample_file ? Channel.fromFilePairs(params.sample_file, tuple(2)) : Channel.empty()
+ch_sample_file = sample_file // bit of duplication here. remove?
 
 
 
-include { INGEST_SAMPLEFILE } from "../modules/local/ingest_samplefile/ingest_samplefile.nf"
+
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 // include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
@@ -45,51 +55,54 @@ include { AGGREGATE_INPUT } from "../modules/local/aggregate_input/aggregate_inp
 workflow SOMATIC_DISCOVERY {
    
 
-    // Print the value of a parameter
-    println("Sample file parameter: ${params.sample_file}")
-
-    // Assuming you have a variable 'sample_file'
-    println("Sample file variable: ${sample_file}")
-
     // check if the paths and files are correctly provided.
-    VALIDATE_ARGS(
-        ch_variant_type,
-        sample_file,
-        ch_region_file,
-        ch_is_cloud
-    )
-    log.info "Completed validation of arguments."
+    // VALIDATE_ARGS(
+    //     ch_variant_type,
+    //     sample_file,
+    //     ch_region_file,
+    //     ch_bed_file,
+    //     ch_is_cloud
+    // )
+    // log.info "Completed validation of arguments."
 
-
-    
     // ingest the sample file.
-        ch_samples = Channel
-        .fromPath( ch_sample_file )
-        .splitCsv(sep: '\t', header: false)
-        .map { row -> tuple(row[0], row[1]) }
-    // ch_samples = INGEST_SAMPLEFILE.out.ch_samples
+    ch_samples = Channel
+    .fromPath( ch_sample_file )
+    .splitCsv(sep: '\t', header: false)
+    .map { row -> tuple(row[0], row[1]) }
+
     // Apply view for debugging
     ch_samples.view { item ->
         println("Sample item: $item")
     }
     log.info "Completed ingesting samples."
+    
+    // Group the ch_sample_file in chunks of 50 tuples
+    grouped_samples = ch_samples
+        .buffer(size: 1, remainder: true)
+        .map { batch -> 
+            batch.collect { tuple -> tuple.join('|') }.join('\n')
+        }
 
-    grouped_samples = ch_samples.buffer(size: 50) // Group the ch_sample_file in chunks of 50 tuples
-    // Use view operator for debugging
     grouped_samples.view { chunk ->
         println("Chunk size: ${chunk.size()}")
     }
+    log.info "Completed chunking samples."
     
-    
+    // // index the vcf files for easy filtering.
+    // // loop over the vcf paths in the ch_sample_file.
+    // // symlink those to /re_scratch/ temp dir
+    // // Process each chunk of 50 tuples through INDEX_VCFS
 
-    // index the vcf files for easy filtering.
-    // loop over the vcf paths in the ch_sample_file.
-    // symlink those to /re_scratch/ temp dir
-    // Process each chunk of 50 tuples through INDEX_VCFS
-    indexed_files = grouped_samplesForUse.map { chunk ->
-        INDEX_VCFS(chunk)
-    }.flatten()
+    INDEX_VCFS(grouped_samples)
+
+    // symlinked_files is a channel of file-paths, which are tab
+    INDEX_VCFS.out.symlinked_files.view { item ->
+        println("Symlink file: $item")
+    }
     log.info "Completed indexing of vcf."
+
+
     // we can use this step to filter apply additional filtering / QC steps to variants / regions of interest
     // variants included.
     // VARIANT_FILTER(
@@ -100,7 +113,7 @@ workflow SOMATIC_DISCOVERY {
     //     symlink_tmp_dir
     // )
 
-    // create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
+    create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
     AGGREGATE_INPUT(
         sl_paths
     )

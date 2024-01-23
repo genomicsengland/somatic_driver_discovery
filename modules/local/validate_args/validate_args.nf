@@ -10,6 +10,7 @@ process VALIDATE_ARGS {
     val(variant_type)
     val(sample_file)
     val(region_file)
+    val(bed_file)
     val(is_cloud)
     // val(data_release)
 
@@ -19,13 +20,13 @@ process VALIDATE_ARGS {
 
     script:
     """
-    echo 'HERE'
     set -eoux pipefail
 
     validate_args.py \
     --variant-type ${variant_type} \
     --region-file ${region_file} \
     --sample-file ${sample_file} \
+    --bed-file ${bed_file} \
     --is-cloud ${is_cloud} 
 
 

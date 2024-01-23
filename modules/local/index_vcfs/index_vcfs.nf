@@ -9,35 +9,41 @@ process INDEX_VCFS {
     //     Channel.value(symlink_tmp_dir).set  { "${params.tmpdir}/${runId}/symlink_tmp" }
     // }
     input:
-    tuple val(sample_path), val(sample_name) from ch_sample_chunk
+    val chunk
 
     output:
-    tuple file(symlinked_file), val(sample_name) into symlinked_files
-    // do we need this? the index should just be in the same dir. But we aren't touching it. 
+    path("symlink_filelist_*"), emit: symlinked_files
+    path "versions.yml", emit : ch_versions_query_cnv
     
-    workDir "${params.tmpDir}/${runId}/"
+    // workDir "${params.tmpDir}/${runId}/"
 
     // is the swap to the workdir required if we already specified it above?
     // symlink to temp directory
     // create index of the symlinked file
     script:
     """
-    work_dir="${params.tmpDir}/${runId}/"
-    mkdir -p ${work_dir}
+    set -eoux pipefail
+
+    work_dir=/pgen_int_work/BRS/cancer_dev/discovery/testing/scratch/
+    mkdir -p \${work_dir}
+    echo -e '\${work_dir}'
 
 
-    for tuple in \${sample_path}
+    while IFS='|' read -r file_path sample_name
     do
-        # Extracting the filename without the path
-        filename=${basename "\${tuple[0]}"} 
+        echo "${task.index} Processing: \$file_path with sample: \$sample_name"
 
-        # Create symlink in the work directory
-        ln -s "\${tuple[0]}" "$work_dir/$filename"
+        index_sl.sh \
+        --vcf \$file_path \
+        --samplename \$sample_name \
+        --symdir \${work_dir} \
+        --chunkid "${task.index}"
 
-       bcftools index -t "$work_dir/$filename"
+    done < <(echo -e "${chunk}")
     
-        # Emit the sample name and symlinked file path as a channel
-        echo "\${tuple[1]} $work_dir/$filename" | emit
-    done
+    cat <<-EOF > versions.yml
+    "${task.process}":
+      bcftools: \$(/bcftools/bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .\$//')
+    EOF
     """
 }

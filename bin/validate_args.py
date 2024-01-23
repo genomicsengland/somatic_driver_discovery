@@ -6,8 +6,9 @@ from pandas import read_csv
 
 @click.command()
 @click.option('--variant-type')
-@click.option('--region-file')
 @click.option('--sample-file')
+@click.option('--region-file')
+@click.option('--bed-file')
 @click.option('--is-cloud')
 # @click.option('--data-release')
 
@@ -16,6 +17,7 @@ def validate_args(
     variant_type,
     region_file,
     sample_file,
+    bed_file,
     is_cloud,
     ):
     """
@@ -28,9 +30,10 @@ def validate_args(
     """
     check_variant_type_value(variant_type)
     check_is_cloud_value(is_cloud)
-    check_sample_file_provided(is_cloud, sample_file)
+    check_sample_file_provided(sample_file)
     check_region_columns(region_file)
-    check_chromosome_notation_in_bed(region_file)
+    check_bed_file(bed_file)
+    check_chromosome_notation_in_bed(bed_file)
     print('----- Arguments validated -----')
 
 
@@ -54,14 +57,40 @@ def check_region_columns(region_file):
     Check input_file for number of columns if bed file is provided
     """
 
-    file_content = read_csv(region_file, header=None, sep='\t')
-    n_cols = len(file_content.columns)
+    file_content = read_csv(region_file, sep='\t')
+    cols = list(file_content.columns)
 
-    if n_cols <= 3:
+    if any([x not in cols for x in ['CHROMOSOME','START','END','SYMBOL']]):
+        missing = [
+            x for x in ['CHROMOSOME','START','END','SYMBOL'] 
+                if x not in cols
+                ]
         error_message = textwrap.dedent(
             f"""
         Error:
-        ! `input_file` must be a 4-column tab-delimited bed file (chr, start, stop, name).
+        ! `region_file` must tab-delimited file containing:
+        (CHROMOSOME, START, STOP, SYMBOL).
+        The `region_file` provided is missing: {~missing,}.
+        Please run the workflow with the appropriate columns in the tab-delimited region file.
+        """
+        )
+        print(error_message)
+        exit(1)
+
+
+def check_bed_file(bed_file):
+    """
+    Check input_file for number of columns if bed file is provided
+    """
+
+    file_content = read_csv(bed_file, sep='\t')
+    n_cols = len(file_content.columns)
+
+    if n_cols < 3:
+        error_message = textwrap.dedent(
+            f"""
+        Error:
+        ! `input_file` must be a 3-column tab-delimited bed file (chr, start, stop).
         The `input_file` provided has {n_cols} columns.
         Please run the workflow with a 4-column tab-delimited bed file.
         """
@@ -71,13 +100,13 @@ def check_region_columns(region_file):
 
 
 
-def check_chromosome_notation_in_bed(region_file):
+def check_chromosome_notation_in_bed(bed_file):
     """
     Check if chromosome notation used in input BED file
     is concordant with specified genome_build.
     """
 
-    with open(region_file) as bed:
+    with open(bed_file) as bed:
         startwith_chr = [line.startswith('chr') for line in bed]
 
     if not all(startwith_chr):
@@ -110,7 +139,15 @@ def check_sample_file_provided(sample_file):
         exit(1)
 
     samps = read_csv(sample_file)
-    if samps.shape[1] != 2:
+    if samps.shape[0] != 2:
+        error_message = textwrap.dedent(
+            """
+        Error:
+        ! `sample_file` must be provided by the user when running the workflow.
+        The `sample_file` is a two column tsv file without a header.
+        Please check the shape of `sample_file`.
+        """
+        )
         print(error_message)
         exit(1)
 
