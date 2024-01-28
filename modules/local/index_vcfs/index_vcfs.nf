@@ -13,7 +13,7 @@ process INDEX_VCFS {
 
     output:
     path("symlink_filelist_*"), emit: symlinked_files
-    path "versions.yml", emit : ch_versions_query_cnv
+    path "versions.yml", emit : ch_versions_index_vcfs
     
     // workDir "${params.tmpDir}/${runId}/"
 
@@ -26,7 +26,6 @@ process INDEX_VCFS {
 
     work_dir=/pgen_int_work/BRS/cancer_dev/discovery/testing/scratch/
     mkdir -p \${work_dir}
-    echo -e '\${work_dir}'
 
 
     while IFS='|' read -r file_path sample_name

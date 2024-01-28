@@ -2,7 +2,7 @@
 
 help()
 {
-    echo "Usage: query_sv
+    echo "Usage: index_sl
                 [ -v | --vcf            ]
                 [ -s | --samplename     ]
                 [ -y | --symdir         ]
@@ -78,9 +78,4 @@ ln -s "$vcf" "$symlinked_file"
 bcftools index -t "$symlinked_file"
 
 # Emit the sample name and symlinked file path
-echo -e "${symlinked_file}\t${samplename}\n" >> ${OUT}
-        
-
-
-
-
+echo -e "${symlinked_file}\t${samplename}" >> ${OUT}

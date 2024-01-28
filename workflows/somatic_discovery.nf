@@ -3,14 +3,6 @@ nextflow.enable.dsl=2
 def sample_file = params.sample_file == null ? "No user-specified sample file." : params.sample_file
 // adding an chunk_id for each.
 
-def addGroupIds(Channel ch) {
-    def counter = 1
-    return ch.map { chunk ->
-        def groupId = counter++
-        return [groupId, chunk]
-    }
-}
-
 log.info """\
 
     S O M A T I C  D I S C O V E R Y
@@ -43,11 +35,9 @@ ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.n
 ch_sample_file = sample_file // bit of duplication here. remove?
 
 
-
-
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
-// include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
+include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
 include { AGGREGATE_INPUT } from "../modules/local/aggregate_input/aggregate_input.nf"
 // include { RUN_TOOLS } from "../modules/local/run_tools/run_tools.nf"
 // include { COMBINE_OUTPUT} from "../modules/local/combine_output/combine_output.nf"
@@ -79,7 +69,7 @@ workflow SOMATIC_DISCOVERY {
     
     // Group the ch_sample_file in chunks of 50 tuples
     grouped_samples = ch_samples
-        .buffer(size: 1, remainder: true)
+        .buffer(size: 50, remainder: true)
         .map { batch -> 
             batch.collect { tuple -> tuple.join('|') }.join('\n')
         }
@@ -105,18 +95,26 @@ workflow SOMATIC_DISCOVERY {
 
     // we can use this step to filter apply additional filtering / QC steps to variants / regions of interest
     // variants included.
-    // VARIANT_FILTER(
-    //     ch_variant_type,
-    //     ch_sample_file,
-    //     ch_region_file,
-    //     ch_is_cloud,
-    //     symlink_tmp_dir
-    // )
-
-    create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
-    AGGREGATE_INPUT(
-        sl_paths
+    log.info "starting to aggregate variants in chunks."
+    //create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
+    VARIANT_FILTER(
+        ch_bed_file,
+        INDEX_VCFS.out.symlinked_files  // is this how i chain them?
     )
+    log.info "starting to aggregate variants in chunks."
+    VARIANT_FILTER.out.mini_aggregates.view { item ->
+        println("Symlink file: $item")
+    }
+    // gather and merge the chunks
+    // (both the symlinked file list and the mini-aggregates resulting from these symlinks)
+    // AGGREGATE_INPUT(
+    //     INDEX_VCFS.out.symlinked_files.collectFile(name: 'sl_files.txt', newLine: true),
+    //     VARIANT_FILTER.out.mini_aggregates..collectFile(name: 'mini_aggs.txt', newLine: true)
+    // )
+    // log.info "completed aggregations."
+
+    // but we also need an aggregate of all symlinked files (for mutenricher input).
+    // Lets take have another output from combine_aggregates where we join the symlinked files? 
 
     // split different tools here? or one workflow that contains the three tools?
     //RUN_TOOLS()
