@@ -69,7 +69,7 @@ workflow SOMATIC_DISCOVERY {
     
     // Group the ch_sample_file in chunks of 50 tuples
     grouped_samples = ch_samples
-        .buffer(size: 50, remainder: true)
+        .buffer(size: 1, remainder: true)
         .map { batch -> 
             batch.collect { tuple -> tuple.join('|') }.join('\n')
         }
@@ -105,13 +105,33 @@ workflow SOMATIC_DISCOVERY {
     VARIANT_FILTER.out.mini_aggregates.view { item ->
         println("Symlink file: $item")
     }
+
     // gather and merge the chunks
-    // (both the symlinked file list and the mini-aggregates resulting from these symlinks)
+    // creating the symlink file list and the somatic aggregate.
+    ////////////////
+    // TODO these should be routed to a tmp directory in /re_scratch/
+    ////////////////
+    INDEX_VCFS.out.symlinked_files
+        .collectFile(name: 'sl_files.txt', newLine: false)
+        .set { ch_symlinks }
+
+    VARIANT_FILTER.out.mini_aggregates
+        .collectFile(name: 'somatic_aggregate.txt', newLine: false, keepHeader: true, skip: 1)
+        .set { ch_agg_chunks }
+
+    // superseded by collectFile nextflow operator.
     // AGGREGATE_INPUT(
-    //     INDEX_VCFS.out.symlinked_files.collectFile(name: 'sl_files.txt', newLine: true),
-    //     VARIANT_FILTER.out.mini_aggregates..collectFile(name: 'mini_aggs.txt', newLine: true)
+    //     ch_symlinks,
+    //     ch_agg_chunks
     // )
-    // log.info "completed aggregations."
+    log.info "completed aggregations."
+
+    // Different paths if we have a coding or non-coding run.
+    // mutenricher and oncodriveFML can handle both.
+    // dNdScv can only handle coding variants.
+    if ( params.variant_type == 'coding') {
+        
+    }
 
     // but we also need an aggregate of all symlinked files (for mutenricher input).
     // Lets take have another output from combine_aggregates where we join the symlinked files? 

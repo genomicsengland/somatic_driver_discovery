@@ -12,7 +12,7 @@ process INDEX_VCFS {
     val chunk
 
     output:
-    path("symlink_filelist_*"), emit: symlinked_files
+    path "symlink_filelist_*", emit: symlinked_files
     path "versions.yml", emit : ch_versions_index_vcfs
     
     // workDir "${params.tmpDir}/${runId}/"

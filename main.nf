@@ -24,8 +24,7 @@ def helpMessage() {
         
         Query type parameters
         --variant_type : determines if 'non-coding', 'coding' or 'both' variants should be queried. Defaults to 'coding'
-        --region_file : [ optional ] a gtf file of coding or non-coding regions, contains as header: (CHROMOSOME, START, END, SYMBOL)
-        --bed_file : [ optional ] a path to a headless four-column tab-delimited bed file (chr, start, stop, name) of contig regions.
+        --region_file : a path to a headless four-column tab-delimited bed file (chr, start, stop, name) of query regions.
         """
     )
 }
