@@ -1,4 +1,4 @@
-process AGGREGATE_INPUT {
+process RUN_DNDSCV {
     /*
         per chunk: aggregate variants to use in oncodrivefml and dndscv.
 

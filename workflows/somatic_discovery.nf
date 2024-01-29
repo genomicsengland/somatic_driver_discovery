@@ -30,6 +30,7 @@ Channel.value(params.variant_type).set { ch_variant_type }
 Channel.value(params.is_cloud).set { ch_is_cloud }
 Channel.value(params.bed_file).set { ch_bed_file }  // TODO need to include a check if a different user specified file is provided.
 
+
 Channel.value(params.region_file).set { ch_region_file }
 ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
 ch_sample_file = sample_file // bit of duplication here. remove?
@@ -38,8 +39,9 @@ ch_sample_file = sample_file // bit of duplication here. remove?
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
-include { AGGREGATE_INPUT } from "../modules/local/aggregate_input/aggregate_input.nf"
-// include { RUN_TOOLS } from "../modules/local/run_tools/run_tools.nf"
+include { RUN_MUTENRICHER } from "../modules/local/run_mutenricher/run_mutenricher.nf"
+include { RUN_ONCODRIVEFML } from "../modules/local/run_oncodrivefml/run_oncodrivefml.nf"
+include { RUN_DNDSCV } from "../modules/local/run_dndscv/run_dndscv.nf"
 // include { COMBINE_OUTPUT} from "../modules/local/combine_output/combine_output.nf"
 
 workflow SOMATIC_DISCOVERY {
@@ -85,7 +87,6 @@ workflow SOMATIC_DISCOVERY {
     // // Process each chunk of 50 tuples through INDEX_VCFS
 
     INDEX_VCFS(grouped_samples)
-
     // symlinked_files is a channel of file-paths, which are tab
     INDEX_VCFS.out.symlinked_files.view { item ->
         println("Symlink file: $item")
@@ -119,20 +120,30 @@ workflow SOMATIC_DISCOVERY {
         .collectFile(name: 'somatic_aggregate.txt', newLine: false, keepHeader: true, skip: 1)
         .set { ch_agg_chunks }
 
-    // superseded by collectFile nextflow operator.
-    // AGGREGATE_INPUT(
-    //     ch_symlinks,
-    //     ch_agg_chunks
-    // )
+
     log.info "completed aggregations."
 
     // Different paths if we have a coding or non-coding run.
     // mutenricher and oncodriveFML can handle both.
     // dNdScv can only handle coding variants.
     if ( params.variant_type == 'coding') {
-        
+        // RUN_DNDSCV()
+        RUN_MUTENRICHER(
+            ch_symlinks,
+            params.variant_type
+        )
+        // oncodriveFML has some additional folder structure etc that needs to be accessed. Worth including those in the singularity container?
+        // or we could migrate them to public_data_resources?
+        // right now hosted in /re_scratch/ which doesn't seem like a long term solution.
+        RUN_ONCODRIVEFML(
+            ch_agg_chunks,
+            ch_region_file,
+        )
+    } else {
+        RUN_MUTENRICHER()
+        // RUN_ONCODRIVEFML()
     }
-
+    log.info "Ran tools."
     // but we also need an aggregate of all symlinked files (for mutenricher input).
     // Lets take have another output from combine_aggregates where we join the symlinked files? 
 
