@@ -3,6 +3,7 @@ process INDEX_VCFS {
     create a symlink on the vcfs, and index the vcf to improve filtering and aggregation.
     */
 
+    // scratch /re_scratch/nf_discovery/${task.index}
     // work {
     //     // Define the temporary directory path
     //     temp = "${params.tmpDir}"
@@ -14,6 +15,7 @@ process INDEX_VCFS {
     output:
     path "symlink_filelist_*", emit: symlinked_files
     path "versions.yml", emit : ch_versions_index_vcfs
+	path "/re_scratch/nf_discovery/${task.index}", emit: sl_tmpdirs
     
     // workDir "${params.tmpDir}/${runId}/"
 
@@ -24,7 +26,7 @@ process INDEX_VCFS {
     """
     set -eoux pipefail
 
-    work_dir=/pgen_int_work/BRS/cancer_dev/discovery/testing/scratch/
+    work_dir=/re_scratch/nf_discovery/${task.index}
     mkdir -p \${work_dir}
 
 
