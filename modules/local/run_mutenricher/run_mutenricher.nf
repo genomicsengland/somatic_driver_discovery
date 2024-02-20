@@ -7,6 +7,7 @@ process RUN_MUTENRICHER {
         "${params.outdir}",
         mode: 'copy',
     )
+
     input:
     path(symlinked_files)
 	val(variant_type)
@@ -19,7 +20,6 @@ process RUN_MUTENRICHER {
     script:
     """
     set -eoux pipefail
-    # TAKE MINI-AGGREGATES AS INPUT AND COMBINE.
 
 	python /usr/src/app/MutEnricher/mutEnricher.py ${variant_type} \
 	/mnt/v1.0/MANE.GRCh38.v1.0.ensembl_genomic.gtf.gz \

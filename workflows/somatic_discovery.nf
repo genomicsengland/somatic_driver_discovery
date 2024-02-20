@@ -139,6 +139,9 @@ workflow SOMATIC_DISCOVERY {
             ch_agg_chunks,
             ch_region_file,
         )
+        RUN_DNDSCV(
+            ch_agg_chunks
+        )
     } else {
         RUN_MUTENRICHER()
         // RUN_ONCODRIVEFML()
