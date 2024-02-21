@@ -29,7 +29,7 @@ process RUN_DNDSCV {
     --name dndscv \
     --indels \
     --maxmuts 3 \
-    --tmbmax 5000 \
+    --tmbmax 8000 \
     --wnon_constrain
 
 

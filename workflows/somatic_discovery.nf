@@ -48,7 +48,7 @@ include { RUN_DNDSCV } from "../modules/local/run_dndscv/run_dndscv.nf"
 workflow SOMATIC_DISCOVERY {
    
 
-    // // check if the paths and files are correctly provided.
+    // check if the paths and files are correctly provided.
     VALIDATE_ARGS(
         ch_variant_type,
         sample_file,
@@ -100,12 +100,11 @@ workflow SOMATIC_DISCOVERY {
     // we can use this step to filter apply additional filtering / QC steps to variants / regions of interest
     // variants included.
     log.info "starting to aggregate variants in chunks."
-    //create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
+    // create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
     VARIANT_FILTER(
         ch_bed_file,
         INDEX_VCFS.out.symlinked_files
     )
-    log.info "starting to aggregate variants in chunks."
     VARIANT_FILTER.out.mini_aggregates.view { item ->
         println("Symlink file: $item")
     }
@@ -157,6 +156,6 @@ workflow SOMATIC_DISCOVERY {
     // CLEAN_SCRATCH()
 
     // combine the outputs of the different tools
-    //COMBINE_OUTPUT()
+    // COMBINE_OUTPUT()
 }
 
