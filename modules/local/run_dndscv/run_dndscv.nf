@@ -36,7 +36,7 @@ process RUN_DNDSCV {
 
     cat <<-EOF > versions.yml
     "${task.process}":
-      R: \$( R --version | head -n1 | cut -d' ' -f2 )
+      R: \$( R --version | head -n1 | cut -d' ' -f3 )
     EOF
     """
 }

@@ -18,9 +18,14 @@ driver_discovery='/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discove
 nextflow run "${driver_discovery}"/main.nf \
     --sample_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/min_luad_vcf.txt" \
     --variant_type "coding" \
-    --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/coding_CDS.tsv.gz" \
-    --bed_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/hg38.bed" \
+    --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/coding_CDS.tsv.gz" \
+    --bed_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/hg38.bed" \
+    --scratchdir '/nas/weka.gel.zone/re_scratch/cb_ind/tmp' \
     -profile cluster
-    -resume
+    # once re_scratch issues are fixed use:
+    # we do have to implement a step where we remove this dir again though.
     
+    # --scratchdir "/re_scratch/${LSB_JOBID}/" \  
+
+#    -resume
 #  --region_file '/public_data_resources/ensembl_cds/MANE/v1.0/MANE.GRCh38.v1.0.ensembl_genomic.gtf.gz' \

@@ -1,15 +1,10 @@
 process INDEX_VCFS {
     /*
-    create a symlink on the vcfs, and index the vcf to improve filtering and aggregation.
+    create a symlink of the vcfs, and index them vcf to allow filtering and aggregation.
     */
-
-    // work {
-    //     // Define the temporary directory path
-    //     temp = "${params.tmpDir}"
-    //     Channel.value(symlink_tmp_dir).set  { "${params.tmpdir}/${runId}/symlink_tmp" }
-    // }
     input:
     val chunk
+    val tmpdir
 
     output:
     path "symlink_filelist_*", emit: symlinked_files
@@ -24,7 +19,7 @@ process INDEX_VCFS {
     """
     set -eoux pipefail
 
-    work_dir=/pgen_int_work/BRS/cancer_dev/discovery/testing/scratch/
+    work_dir=${tmpdir}
     mkdir -p \${work_dir}
 
 
