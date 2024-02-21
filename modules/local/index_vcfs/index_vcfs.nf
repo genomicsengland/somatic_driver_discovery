@@ -1,21 +1,14 @@
 process INDEX_VCFS {
     /*
-    create a symlink on the vcfs, and index the vcf to improve filtering and aggregation.
+    create a symlink of the vcfs, and index them vcf to allow filtering and aggregation.
     */
-
-    // scratch /re_scratch/nf_discovery/${task.index}
-    // work {
-    //     // Define the temporary directory path
-    //     temp = "${params.tmpDir}"
-    //     Channel.value(symlink_tmp_dir).set  { "${params.tmpdir}/${runId}/symlink_tmp" }
-    // }
     input:
     val chunk
+    val tmpdir
 
     output:
     path "symlink_filelist_*", emit: symlinked_files
     path "versions.yml", emit : ch_versions_index_vcfs
-	path "/re_scratch/nf_discovery/${task.index}", emit: sl_tmpdirs
     
     // workDir "${params.tmpDir}/${runId}/"
 
@@ -26,7 +19,7 @@ process INDEX_VCFS {
     """
     set -eoux pipefail
 
-    work_dir=/re_scratch/nf_discovery/${task.index}
+    work_dir=${tmpdir}
     mkdir -p \${work_dir}
 
 

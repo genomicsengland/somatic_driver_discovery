@@ -29,7 +29,7 @@ Channel.value(data_release).set { ch_data_release }
 Channel.value(params.variant_type).set { ch_variant_type }
 Channel.value(params.is_cloud).set { ch_is_cloud }
 Channel.value(params.bed_file).set { ch_bed_file }  // TODO need to include a check if a different user specified file is provided.
-
+Channel.value(params.scratchdir).set { ch_tmpdir }
 
 Channel.value(params.region_file).set { ch_region_file }
 ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
@@ -43,12 +43,12 @@ include { RUN_MUTENRICHER } from "../modules/local/run_mutenricher/run_mutenrich
 include { RUN_ONCODRIVEFML } from "../modules/local/run_oncodrivefml/run_oncodrivefml.nf"
 include { RUN_DNDSCV } from "../modules/local/run_dndscv/run_dndscv.nf"
 // include { COMBINE_OUTPUT} from "../modules/local/combine_output/combine_output.nf"
-include { CLEAN_SCRATCH } from "../modules/local/clean_scratch/clean_scratch.nf"
+// include { CLEAN_SCRATCH } from "../modules/local/clean_scratch/clean_scratch.nf"
 
 workflow SOMATIC_DISCOVERY {
    
 
-    // check if the paths and files are correctly provided.
+    // // check if the paths and files are correctly provided.
     VALIDATE_ARGS(
         ch_variant_type,
         sample_file,
@@ -76,7 +76,7 @@ workflow SOMATIC_DISCOVERY {
     // Process each chunk of 50 tuples through INDEX_VCFS
 
     grouped_samples = ch_samples
-        .buffer(size: 1, remainder: true)
+        .buffer(size: 25, remainder: true)
         .map { batch -> 
             batch.collect { tuple -> tuple.join('|') }.join('\n')
         }
@@ -86,7 +86,10 @@ workflow SOMATIC_DISCOVERY {
     log.info "Completed chunking samples."
     
     // Group the ch_sample_file in chunks of 50 tuples
-    INDEX_VCFS(grouped_samples)
+    INDEX_VCFS(
+        grouped_samples,
+        ch_tmpdir
+        )
     // symlinked_files is a channel of file-paths
     // INDEX_VCFS.out.symlinked_files.view { item ->
     //     println("Symlink file: $item")
@@ -151,14 +154,7 @@ workflow SOMATIC_DISCOVERY {
     }
     log.info "Ran tools."
 
-    CLEAN_SCRATCH(
-        index_vcfs.sl_tmpdirs
-    )
-    // but we also need an aggregate of all symlinked files (for mutenricher input).
-    // Lets take have another output from combine_aggregates where we join the symlinked files? 
-
-    // split different tools here? or one workflow that contains the three tools?
-    //RUN_TOOLS()
+    // CLEAN_SCRATCH()
 
     // combine the outputs of the different tools
     //COMBINE_OUTPUT()
