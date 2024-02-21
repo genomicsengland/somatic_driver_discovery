@@ -12,16 +12,17 @@ process RUN_DNDSCV {
     path(aggregate)
 
     output:
-    path("./dndscv/dndscv/dndscv.txt"), emit: dndscv_enrichments
+    path("./dndscv/dndscv"), emit: dndscv_enrichments
 
     script:
     """
     set -eoux pipefail
-   
+   mkdir ./dndscv
+
     Rscript /usr/src/app/run_dndscv.R \
     --ref /usr/src/app/data/RefCDS_human_GRCh38_GencodeV18_recommended.rda \
     --varagg "${aggregate}" \
-    --out dndscv/ \
+    --out ./dndscv \
     --subm 192r_3w \
     --known_cancer_genes NULL \
     --covariates covariates_hg19_hg38_epigenome_pcawg.rda \
@@ -35,7 +36,7 @@ process RUN_DNDSCV {
 
     cat <<-EOF > versions.yml
     "${task.process}":
-      R: \$( R --version | head -n1 | cut -d' ' -f2 )
+      R: \$( R --version | head -n1 | cut -d' ' -f3 )
     EOF
     """
 }

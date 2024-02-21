@@ -7,7 +7,7 @@ log.info """\
 
     S O M A T I C  D I S C O V E R Y
     ==================================
-    pipeline version : 0.1
+    pipeline version : 0.2
     data release     : ${params.data_version}
     sample file      : ${sample_file}
     variant type     : ${params.variant_type}
@@ -48,7 +48,7 @@ include { CLEAN_SCRATCH } from "../modules/local/clean_scratch/clean_scratch.nf"
 workflow SOMATIC_DISCOVERY {
    
 
-    check if the paths and files are correctly provided.
+    // check if the paths and files are correctly provided.
     VALIDATE_ARGS(
         ch_variant_type,
         sample_file,
@@ -70,28 +70,27 @@ workflow SOMATIC_DISCOVERY {
     }
     log.info "Completed ingesting samples."
     
-    // Group the ch_sample_file in chunks of 50 tuples
+    // index the vcf files for easy filtering/aggregation.
+    // loop over the vcf paths in the ch_sample_file.
+    // symlink those to /re_scratch/ temp dir
+    // Process each chunk of 50 tuples through INDEX_VCFS
+
     grouped_samples = ch_samples
         .buffer(size: 1, remainder: true)
         .map { batch -> 
             batch.collect { tuple -> tuple.join('|') }.join('\n')
         }
-
-    grouped_samples.view { chunk ->
-        println("Chunk size: ${chunk.size()}")
-    }
+    // grouped_samples.view { chunk ->
+    //     println("Chunk size: ${chunk.size()}")
+    // }
     log.info "Completed chunking samples."
     
-    // index the vcf files for easy filtering.
-    // loop over the vcf paths in the ch_sample_file.
-    // symlink those to a /re_scratch/ temp dir
-    // Process each chunk of 50 tuples through INDEX_VCFS
-
+    // Group the ch_sample_file in chunks of 50 tuples
     INDEX_VCFS(grouped_samples)
-    // symlinked_files is a channel of file-paths, which are tab delimited.
-    INDEX_VCFS.out.symlinked_files.view { item ->
-        println("Symlink file: $item")
-    }
+    // symlinked_files is a channel of file-paths
+    // INDEX_VCFS.out.symlinked_files.view { item ->
+    //     println("Symlink file: $item")
+    // }
     log.info "Completed indexing of vcf."
 
 
@@ -101,7 +100,7 @@ workflow SOMATIC_DISCOVERY {
     //create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
     VARIANT_FILTER(
         ch_bed_file,
-        INDEX_VCFS.out.symlinked_files  // is this how i chain them?
+        INDEX_VCFS.out.symlinked_files
     )
     log.info "starting to aggregate variants in chunks."
     VARIANT_FILTER.out.mini_aggregates.view { item ->
@@ -119,8 +118,7 @@ workflow SOMATIC_DISCOVERY {
 
     VARIANT_FILTER.out.mini_aggregates
         .collectFile(name: 'somatic_aggregate.txt', newLine: false, keepHeader: true, skip: 1)
-        .set { ch_agg_chunks }
-
+        .set { ch_aggregate }
 
     log.info "completed aggregations."
 
@@ -128,7 +126,6 @@ workflow SOMATIC_DISCOVERY {
     // mutenricher and oncodriveFML can handle both.
     // dNdScv can only handle coding variants.
     if ( params.variant_type == 'coding') {
-        // RUN_DNDSCV()
         RUN_MUTENRICHER(
             ch_symlinks,
             params.variant_type
@@ -137,15 +134,20 @@ workflow SOMATIC_DISCOVERY {
         // or we could migrate them to public_data_resources?
         // right now hosted in /re_scratch/ which doesn't seem like a long term solution.
         RUN_ONCODRIVEFML(
-            ch_agg_chunks,
+            ch_aggregate,
             ch_region_file,
         )
         RUN_DNDSCV(
-            ch_agg_chunks
+            ch_aggregate
         )
     } else {
-        RUN_MUTENRICHER()
-        // RUN_ONCODRIVEFML()
+        RUN_MUTENRICHER(
+            ch_symlinks,
+            params.variant_type
+        )
+        RUN_ONCODRIVEFML(
+            ch_aggregate
+        )
     }
     log.info "Ran tools."
 
