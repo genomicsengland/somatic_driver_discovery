@@ -20,12 +20,9 @@ nextflow run "${driver_discovery}"/main.nf \
     --variant_type "coding" \
     --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/coding_CDS.tsv.gz" \
     --bed_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/hg38.bed" \
-    --scratchdir "/re_scratch/aho/tinkering" \
-    -profile cluster \
-    -resume
+    --scratchdir '/nas/weka.gel.zone/re_scratch/cb_ind/tmp' \ 
+    -profile cluster    
+    # --scratchdir "/re_scratch/${LSB_JOBID}/" \  
 
-# once re_scratch issues are fixed use:
-# we do have to implement a step where we remove this dir again though.
-# --scratchdir "/re_scratch/${LSB_JOBID}/" \  
 
 #  --region_file '/public_data_resources/ensembl_cds/MANE/v1.0/MANE.GRCh38.v1.0.ensembl_genomic.gtf.gz' \
