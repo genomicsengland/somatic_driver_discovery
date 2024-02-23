@@ -3,27 +3,40 @@ process RUN_DNDSCV {
         per chunk: aggregate variants to use in oncodrivefml and dndscv.
 
     */
+    publishDir (
+        "${params.outdir}",
+        mode: 'copy',
+    )
+
     input:
-    path(symlinked_files)
-    path(mini_aggregates)
+    path(aggregate)
 
     output:
-    path("full_aggregate.txt"), emit: full_aggregate
-    path("all_sylinked_files.txt"), emit: all_symlinks
+    path("./dndscv/dndscv"), emit: dndscv_enrichments
 
     script:
     """
     set -eoux pipefail
-    # TAKE MINI-AGGREGATES AS INPUT AND COMBINE.
+   mkdir ./dndscv
 
-    concat_aggregates.py \
-    --mini_aggs ${mini_aggregates} \
-    --symlink_files ${symlinked_files}
+    Rscript /usr/src/app/run_dndscv.R \
+    --ref /usr/src/app/data/RefCDS_human_GRCh38_GencodeV18_recommended.rda \
+    --varagg "${aggregate}" \
+    --out ./dndscv \
+    --subm 192r_3w \
+    --known_cancer_genes NULL \
+    --covariates covariates_hg19_hg38_epigenome_pcawg.rda \
+    --name dndscv \
+    --indels \
+    --maxmuts 3 \
+    --tmbmax 8000 \
+    --wnon_constrain
+
 
 
     cat <<-EOF > versions.yml
     "${task.process}":
-      python: \$( python --version | head -n1 | cut -d' ' -f2 )
+      R: \$( R --version | head -n1 | cut -d' ' -f3 )
     EOF
     """
 }
