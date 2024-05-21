@@ -21,8 +21,8 @@ nextflow run "${driver_discovery}"/main.nf \
     --variant_type "coding" \
     --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/coding_CDS.tsv.gz" \
     --bed_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/hg38.bed" \
-    --scratchdir '/nas/weka.gel.zone/re_scratch/cb_ind/tmp' \ 
-    -profile cluster    
+    --scratchdir '/nas/weka.gel.zone/re_scratch/cb_ind/tmp' \
+    -profile cluster
     # --scratchdir "/re_scratch/${LSB_JOBID}/" \  
 
 
