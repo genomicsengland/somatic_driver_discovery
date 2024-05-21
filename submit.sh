@@ -2,16 +2,17 @@
 
 #BSUB -P bio
 #BSUB -q inter
-#BSUB -J structural_variant
-#BSUB -o logs/%J_structural_variant.stdout
-#BSUB -e logs/%J_structural_variant.stderr
+#BSUB -J somatic_driver
+#BSUB -o logs/%J_somatic_driver.stdout
+#BSUB -e logs/%J_somatic_driver.stderr
 
 
 LSF_JOB_ID=$LSB_JOBID
+export NXF_DISABLE_CHECK_LATEST=true
 export NXF_LOG_FILE="logs/${LSF_JOB_ID}_nextflow.log"
 
 module purge
-module load tools/singularity/3.8.3 bio/nextflow/22.10.5 lang/Java/17.0.2
+module load singularity/4.1.1 nextflow/23.10
 
 driver_discovery='/pgen_int_work/BRS/aho/brsc/somatic_driver_discovery'
 
