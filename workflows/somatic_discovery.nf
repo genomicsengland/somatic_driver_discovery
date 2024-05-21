@@ -1,8 +1,5 @@
 nextflow.enable.dsl=2
 
-def sample_file = params.sample_file == null ? "No user-specified sample file." : params.sample_file
-// adding an chunk_id for each.
-
 log.info """\
 
     S O M A T I C  D I S C O V E R Y
@@ -17,9 +14,11 @@ log.info """\
 
     """.stripIndent()
 
+// workflow channels/variables
+def sample_file = params.sample_file == null ? "No user-specified sample file." : params.sample_file
+def param_json_file = params.parameter_json == null ? "No user-specified parameter file." : params.parameter_json
 
 Channel.value(params.data_version).set { ch_data_version }
-
 matcher = (params.data_version =~ /v(.+?)_/)
 if (matcher.find()) {
     data_release = matcher.group(1)
@@ -30,12 +29,19 @@ Channel.value(params.variant_type).set { ch_variant_type }
 Channel.value(params.is_cloud).set { ch_is_cloud }
 Channel.value(params.bed_file).set { ch_bed_file }  // TODO need to include a check if a different user specified file is provided.
 Channel.value(params.scratchdir).set { ch_tmpdir }
-
+Channel.value(params.parameterjson).set { ch_paramjson }
 Channel.value(params.region_file).set { ch_region_file }
 ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
 ch_sample_file = sample_file // bit of duplication here. remove?
+ch_param_json = param_json_file
 
+// read in tool parameters
+import groovy.json.JsonSlurper
+def json_slurper = new JsonSlurper()
+def toolparams = json_slurper(ch_param_json)
+log.info("${toolparams}")
 
+// include modules
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"

@@ -2,9 +2,9 @@
 
 #BSUB -P bio
 #BSUB -q inter
-#BSUB -J structural_variant
-#BSUB -o logs/%J_structural_variant.stdout
-#BSUB -e logs/%J_structural_variant.stderr
+#BSUB -J somatic_driver
+#BSUB -o logs/%J_somatic_driver.stdout
+#BSUB -e logs/%J_somatic_driver.stderr
 
 
 LSF_JOB_ID=$LSB_JOBID
@@ -20,7 +20,8 @@ nextflow run "${driver_discovery}"/main.nf \
     --variant_type "coding" \
     --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/coding_CDS.tsv.gz" \
     --bed_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/hg38.bed" \
-    --scratchdir '/nas/weka.gel.zone/re_scratch/cb_ind/tmp' \ 
+    --scratchdir '/nas/weka.gel.zone/re_scratch/cb_ind/tmp' \
+    --parameter_json 'input/params.json' \
     -profile cluster    
     # --scratchdir "/re_scratch/${LSB_JOBID}/" \  
 
