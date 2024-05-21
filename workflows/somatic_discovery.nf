@@ -31,7 +31,6 @@ log.info """\
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 Channel.value(params.data_version).set { ch_data_version }
-
 matcher = (params.data_version =~ /v(.+?)_/)
 if (matcher.find()) {
     data_release = matcher.group(1)
@@ -45,6 +44,7 @@ Channel.value(params.scratchdir).set { ch_tmpdir }
 Channel.value(params.region_file).set { ch_region_file }
 ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
 ch_sample_file = sample_file // bit of duplication here. remove?
+ch_param_json = param_json_file
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

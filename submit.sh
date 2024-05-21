@@ -5,6 +5,10 @@
 #BSUB -J somatic_driver
 #BSUB -o logs/%J_somatic_driver.stdout
 #BSUB -e logs/%J_somatic_driver.stderr
+#BSUB -J somatic_driver
+#BSUB -o logs/%J_somatic_driver.stdout
+#BSUB -e logs/%J_somatic_driver.stderr
+
 
 LSF_JOB_ID=$LSB_JOBID
 export NXF_DISABLE_CHECK_LATEST=true
@@ -24,5 +28,10 @@ nextflow run "${driver_discovery}"/main.nf \
     --variant_type "coding" \
     --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/coding_CDS.tsv.gz" \
     --bed_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/hg38.bed" \
-    --scratchdir ${scratchdir} \
-    -profile cluster
+    --scratchdir "${scratchdir}" \
+    --parameter_json 'input/params.json' \
+    -profile cluster    
+    # --scratchdir "/re_scratch/${LSB_JOBID}/" \  
+
+
+#  --region_file '/public_data_resources/ensembl_cds/MANE/v1.0/MANE.GRCh38.v1.0.ensembl_genomic.gtf.gz' \
