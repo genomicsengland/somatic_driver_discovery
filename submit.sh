@@ -14,7 +14,7 @@ export NXF_LOG_FILE="logs/${LSF_JOB_ID}_nextflow.log"
 module purge
 module load singularity/4.1.1 nextflow/23.10
 
-# VARIABLES TO EDIT PRIOR TO RUNNING
+# VARIABLES TO EDIT PRIOR TO SUBMISSION
 driver_discovery='/pgen_int_work/BRS/aho/brsc/somatic_diver_wf_development/somatic_driver_discovery'
 scratchdir='/re_scratch/aho'
 
