@@ -8,12 +8,13 @@ process COMBINE_OUTPUT_CODING {
 
     input:
     path(me_fisher_enrichments)
-    path(onco_enrichments) 
-    path(dndscv_enrichments) 
+    path(onco_enrichments)
+    path(dndscv_enrichments)
 
     output:
     path('coding_narrow_results.tsv')
     path('coding_wide_results.tsv')
+    path('coding_complete_results.tsv')
 
     script:
     """
@@ -34,11 +35,12 @@ process COMBINE_OUTPUT_NONCODING {
 
     input:
     path(me_fisher_enrichments)
-    path(onco_enrichments) 
+    path(onco_enrichments)
 
     output:
     path('noncoding_narrow_results.tsv')
     path('noncoding_wide_results.tsv')
+    path('noncoding_complete_results.tsv')
 
     script:
     """
