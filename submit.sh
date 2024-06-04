@@ -18,11 +18,11 @@ module load singularity/4.1.1 nextflow/23.10
 driver_discovery='/path/to/dir'
 scratchdir='/re_scratch/path/to/dir'
 
-# RUN WORKFLOW
-cd $driver_discovery
-
+# SET APPROPRIATE PRIVILEGES TO SCRIPTS
 chmod -R u+x ./bin
 
+# RUN WORKFLOW
+cd $driver_discovery
 nextflow run ./main.nf \
     --variant_type "coding" \
     --sample_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/min_luad_vcf.txt" \
