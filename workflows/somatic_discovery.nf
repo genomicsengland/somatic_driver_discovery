@@ -1,5 +1,17 @@
 nextflow.enable.dsl=2
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    DEFINE FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+def sample_file = params.sample_file == null ? "No user-specified sample file." : params.sample_file
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SET LOGGING INFORMATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 log.info """\
 
     S O M A T I C  D I S C O V E R Y
@@ -11,12 +23,13 @@ log.info """\
     output directory : ${params.outdir}
     command          : ${workflow.commandLine}
 
-
     """.stripIndent()
 
-// workflow channels/variables
-def sample_file = params.sample_file == null ? "No user-specified sample file." : params.sample_file
-
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    DEFINE INPUT CHANNELS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 Channel.value(params.data_version).set { ch_data_version }
 matcher = (params.data_version =~ /v(.+?)_/)
 if (matcher.find()) {
@@ -33,26 +46,30 @@ Channel.value(params.region_file).set { ch_region_file }
 ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
 ch_sample_file = sample_file // bit of duplication here. remove?
 
-// read in tool parameters
-// ch_toolparams.view { item ->
-//         println("Tool parameter: $item")
-//     }
-// log.info("$params.user_tool_params")
+log.info("$params.user_tool_params")
 
-// include modules
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT LOCAL MODULES/SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
 include { RUN_MUTENRICHER } from "../modules/local/run_mutenricher/run_mutenricher.nf"
 include { RUN_ONCODRIVEFML } from "../modules/local/run_oncodrivefml/run_oncodrivefml.nf"
 include { RUN_DNDSCV } from "../modules/local/run_dndscv/run_dndscv.nf"
-// include { COMBINE_OUTPUT} from "../modules/local/combine_output/combine_output.nf"
+include { COMBINE_OUTPUT_CODING} from "../modules/local/combine_output/combine_output.nf"
 // include { CLEAN_SCRATCH } from "../modules/local/clean_scratch/clean_scratch.nf"
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    RUN WORKFLOW
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 workflow SOMATIC_DISCOVERY {
-   
 
-    // check if the paths and files are correctly provided.
+    // 1. Check if the input paths and files are correctly provided.
     VALIDATE_ARGS(
         ch_variant_type,
         sample_file,
@@ -62,34 +79,29 @@ workflow SOMATIC_DISCOVERY {
     )
     log.info "Completed validation of arguments."
 
-    // ingest the sample file.
+    // 2. Ingest the samplesheet file and view for debugging purposes.
     ch_samples = Channel
     .fromPath( ch_sample_file )
     .splitCsv(sep: '\t', header: false)
     .map { row -> tuple(row[0], row[1]) }
 
-    // Apply view for debugging
     ch_samples.view { item ->
         println("Sample item: $item")
     }
     log.info "Completed ingesting samples."
-    
-    // index the vcf files for easy filtering/aggregation.
-    // loop over the vcf paths in the ch_sample_file.
-    // symlink those to /re_scratch/ temp dir
-    // Process each chunk of 50 tuples through INDEX_VCFS
 
+    // 3. Index the vcf files for easy filtering/aggregation.
+
+    // 3a. Chunk samples to be fed through INDEX_VCFs.
     grouped_samples = ch_samples
         .buffer(size: 25, remainder: true)
-        .map { batch -> 
+        .map { batch ->
             batch.collect { tuple -> tuple.join('|') }.join('\n')
         }
-    // grouped_samples.view { chunk ->
-    //     println("Chunk size: ${chunk.size()}")
-    // }
+
     log.info "Completed chunking samples."
-    
-    // Group the ch_sample_file in chunks of 50 tuples
+
+    // 3b. Create symlinks in scratch location and index VCFs.
     INDEX_VCFS(
         grouped_samples,
         ch_tmpdir
@@ -101,10 +113,8 @@ workflow SOMATIC_DISCOVERY {
     log.info "Completed indexing of vcf."
 
 
-    // we can use this step to filter apply additional filtering / QC steps to variants / regions of interest
-    // variants included.
+    // 4. Create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
     log.info "starting to aggregate variants in chunks."
-    // create a mini-aggregate of the vcfs, used as input in oncodrive and dndscv.
     VARIANT_FILTER(
         ch_bed_file,
         INDEX_VCFS.out.symlinked_files
@@ -113,11 +123,8 @@ workflow SOMATIC_DISCOVERY {
         println("Symlink file: $item")
     }
 
-    // gather and merge the chunks
-    // creating the symlink file list and the somatic aggregate.
-    ////////////////
-    // TODO these should be routed to a tmp directory in /re_scratch/
-    ////////////////
+    // 5. Gather and merge the mini aggregate chunks
+    // To do: Ensure these are routed to a tmp directory in /re_scratch/
     INDEX_VCFS.out.symlinked_files
         .collectFile(name: 'sl_files.txt', newLine: false)
         .set { ch_symlinks }
@@ -128,7 +135,8 @@ workflow SOMATIC_DISCOVERY {
 
     log.info "completed aggregations."
 
-    // Different paths if we have a coding or non-coding run.
+    // 6. Run tools and combine outputs.
+    // Note: Tool selection is dependent on the user-specified "variant_type" parameter.
     // mutenricher and oncodriveFML can handle both.
     // dNdScv can only handle coding variants.
     if ( params.variant_type == 'coding') {
@@ -169,9 +177,7 @@ workflow SOMATIC_DISCOVERY {
     }
     log.info "Ran tools."
 
+    // 7. Clean scratch for minimum memory footprint.
     // CLEAN_SCRATCH()
 
-    // combine the outputs of the different tools
-    // COMBINE_OUTPUT()
 }
-

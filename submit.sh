@@ -2,20 +2,23 @@
 
 #BSUB -P bio
 #BSUB -q inter
-#BSUB -J params_test_ssd
+#BSUB -J somatic_driver
 #BSUB -o logs/%J_somatic_driver.stdout
 #BSUB -e logs/%J_somatic_driver.stderr
-
 
 LSF_JOB_ID=$LSB_JOBID
 export NXF_DISABLE_CHECK_LATEST=true
 export NXF_LOG_FILE="logs/${LSF_JOB_ID}_nextflow.log"
 
+# LOAD MODULES
 module purge
-module load singularity/3.8.3 nextflow/22.10.5 java/17.0.2
+module load singularity/4.1.1 nextflow/23.10
 
-driver_discovery='/pgen_int_work/BRS/rrodriguespereira/gelrrptickets/BRSC_430/somatic_driver_discovery'
+# VARIABLES TO EDIT PRIOR TO SUBMISSION
+driver_discovery='/path/to/dir'
+scratchdir='/re_scratch/path/to/dir'
 
+# RUN WORKFLOW
 cd $driver_discovery
 
 chmod -R u+x ./bin
