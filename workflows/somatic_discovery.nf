@@ -6,7 +6,7 @@ log.info """\
     ==================================
     pipeline version : 0.2
     data release     : ${params.data_version}
-    sample file      : ${sample_file}
+    sample file      : ${params.sample_file}
     variant type     : ${params.variant_type}
     output directory : ${params.outdir}
     command          : ${workflow.commandLine}
@@ -16,7 +16,6 @@ log.info """\
 
 // workflow channels/variables
 def sample_file = params.sample_file == null ? "No user-specified sample file." : params.sample_file
-def param_json_file = params.parameter_json == null ? "No user-specified parameter file." : params.parameter_json
 
 Channel.value(params.data_version).set { ch_data_version }
 matcher = (params.data_version =~ /v(.+?)_/)
@@ -29,17 +28,16 @@ Channel.value(params.variant_type).set { ch_variant_type }
 Channel.value(params.is_cloud).set { ch_is_cloud }
 Channel.value(params.bed_file).set { ch_bed_file }  // TODO need to include a check if a different user specified file is provided.
 Channel.value(params.scratchdir).set { ch_tmpdir }
-Channel.value(params.parameterjson).set { ch_paramjson }
+// Channel.value(params.user_tool_params).set { ch_toolparams }
 Channel.value(params.region_file).set { ch_region_file }
 ch_region_file = params.variant_type == 'coding' ? params.coding_file : params.non_coding_file
 ch_sample_file = sample_file // bit of duplication here. remove?
-ch_param_json = param_json_file
 
 // read in tool parameters
-import groovy.json.JsonSlurper
-def json_slurper = new JsonSlurper()
-def toolparams = json_slurper(ch_param_json)
-log.info("${toolparams}")
+// ch_toolparams.view { item ->
+//         println("Tool parameter: $item")
+//     }
+// log.info("$params.user_tool_params")
 
 // include modules
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
@@ -134,20 +132,32 @@ workflow SOMATIC_DISCOVERY {
     // mutenricher and oncodriveFML can handle both.
     // dNdScv can only handle coding variants.
     if ( params.variant_type == 'coding') {
-        RUN_MUTENRICHER(
+        if ( params.user_tool_params.run_mutenricher ){
+
+            RUN_MUTENRICHER(
             ch_symlinks,
             params.variant_type
-        )
+            )
+        }
+        
         // oncodriveFML has some additional folder structure etc that needs to be accessed. Worth including those in the singularity container?
         // or we could migrate them to public_data_resources?
         // right now hosted in /re_scratch/ which doesn't seem like a long term solution.
-        RUN_ONCODRIVEFML(
+        if ( params.user_tool_params.run_oncodrivefml ){
+
+            RUN_ONCODRIVEFML(
             ch_aggregate,
             ch_region_file,
-        )
-        RUN_DNDSCV(
+            )
+        }
+        
+        if (  params.user_tool_params.run_dndscv ){
+
+            RUN_DNDSCV(
             ch_aggregate
-        )
+            )
+        }
+        
     } else {
         RUN_MUTENRICHER(
             ch_symlinks,

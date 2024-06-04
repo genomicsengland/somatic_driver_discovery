@@ -2,28 +2,28 @@
 
 #BSUB -P bio
 #BSUB -q inter
-#BSUB -J somatic_driver
+#BSUB -J params_test_ssd
 #BSUB -o logs/%J_somatic_driver.stdout
 #BSUB -e logs/%J_somatic_driver.stderr
 
 
 LSF_JOB_ID=$LSB_JOBID
+export NXF_DISABLE_CHECK_LATEST=true
 export NXF_LOG_FILE="logs/${LSF_JOB_ID}_nextflow.log"
 
 module purge
-module load tools/singularity/3.8.3 bio/nextflow/22.10.5 lang/Java/17.0.2
+module load singularity/3.8.3 nextflow/22.10.5 java/17.0.2
 
-driver_discovery='/pgen_int_work/BRS/aho/brsc/somatic_driver_discovery'
+driver_discovery='/pgen_int_work/BRS/rrodriguespereira/gelrrptickets/BRSC_430/somatic_driver_discovery'
 
-nextflow run "${driver_discovery}"/main.nf \
-    --sample_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/min_luad_vcf.txt" \
+cd $driver_discovery
+
+chmod -R u+x ./bin
+
+nextflow run ./main.nf \
     --variant_type "coding" \
+    --sample_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/min_luad_vcf.txt" \
     --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/coding_CDS.tsv.gz" \
-    --bed_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/hg38.bed" \
-    --scratchdir '/nas/weka.gel.zone/re_scratch/cb_ind/tmp' \
-    --parameter_json 'input/params.json' \
-    -profile cluster    
-    # --scratchdir "/re_scratch/${LSB_JOBID}/" \  
-
-
-#  --region_file '/public_data_resources/ensembl_cds/MANE/v1.0/MANE.GRCh38.v1.0.ensembl_genomic.gtf.gz' \
+    --scratchdir "/nas/weka.gel.zone/re_scratch/rrodriguespereira/ssd" \
+    -c nextflow.config \
+    -profile cluster
