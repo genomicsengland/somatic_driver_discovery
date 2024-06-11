@@ -18,9 +18,6 @@ module load singularity/4.1.1 nextflow/23.10
 driver_discovery='/path/to/dir'
 scratchdir='/re_scratch/path/to/dir'
 
-# SET APPROPRIATE PRIVILEGES TO SCRIPTS
-chmod -R u+x ./bin
-
 # RUN WORKFLOW
 cd $driver_discovery
 nextflow run ./main.nf \
