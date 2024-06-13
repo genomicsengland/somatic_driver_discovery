@@ -166,6 +166,12 @@ workflow SOMATIC_DISCOVERY {
             )
         }
         
+        // combine the outputs of the different tools
+        COMBINE_OUTPUT_CODING(
+            RUN_MUTENRICHER.out.me_fisher_enrichments,
+            RUN_ONCODRIVEFML.out.onco_enrichments,
+            RUN_DNDSCV.out.dndscv_enrichments
+            )
     } else {
         RUN_MUTENRICHER(
             ch_symlinks,

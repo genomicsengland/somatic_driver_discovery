@@ -19,7 +19,6 @@ DRIVER_DISCOVERY='/path/to/dir'
 SCRATCHDIR='/re_scratch/path/to/dir'
 
 # RUN WORKFLOW
-cd $driver_discovery
 nextflow run "${DRIVER_DISCOVERY}"./main.nf \
     --variant_type "coding" \
     --sample_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/min_luad_vcf.txt" \
