@@ -147,7 +147,7 @@ workflow SOMATIC_DISCOVERY {
             params.variant_type
             )
         }
-        
+
         // oncodriveFML has some additional folder structure etc that needs to be accessed. Worth including those in the singularity container?
         // or we could migrate them to public_data_resources?
         // right now hosted in /re_scratch/ which doesn't seem like a long term solution.
@@ -155,17 +155,17 @@ workflow SOMATIC_DISCOVERY {
 
             RUN_ONCODRIVEFML(
             ch_aggregate,
-            ch_region_file,
+            ch_region_file
             )
         }
-        
+
         if (  params.user_tool_params.run_dndscv ){
 
             RUN_DNDSCV(
             ch_aggregate
             )
         }
-        
+
         // combine the outputs of the different tools
         COMBINE_OUTPUT_CODING(
             RUN_MUTENRICHER.out.me_fisher_enrichments,
