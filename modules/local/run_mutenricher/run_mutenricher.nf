@@ -11,6 +11,23 @@ process RUN_MUTENRICHER {
     input:
     path(symlinked_files)
 	val(variant_type)
+    val(anno_type)
+    val(gtf_gene_model_info)
+    val(gene_list)
+    val(covariates_file)
+    val(weights)
+    val(stat_type)
+    val(background_mut_calc)
+    val(min_clust_size)
+    val(ap_iters)
+    val(ap_convits)
+    val(ap_algorithm)
+    val(hotspot_distance)
+    val(min_hs_vars)
+    val(min_hs_samps)
+    val(snps_only)
+    val(blacklist)
+    val(prefix)
 
     output:
     path("./mutenricher/test_gene_enrichments.txt"), emit: me_enrichments
@@ -22,14 +39,26 @@ process RUN_MUTENRICHER {
     set -eoux pipefail
 
 	python /usr/src/app/MutEnricher/mutEnricher.py ${variant_type} \
-	/mnt/v1.0/MANE.GRCh38.v1.0.ensembl_genomic.gtf.gz \
-	${symlinked_files} \
-	-o ./mutenricher \
-	--prefix test \
-	--anno-type cellbase \
-	--use-local \
-	--gene-field gene_name
-
+        ${gtf_gene_model_info} \
+        ${symlinked_files} \
+        ${background_mut_calc} \
+        ${gene_list} \
+        ${covariates_file} \
+        ${weights} \
+        ${blacklist} \
+        --anno-type ${anno_type} \
+        --stat-type ${stat_type} \
+        --min-clust-size ${min_clust_size} \
+        --ap-iters ${ap_iters} \
+        --ap-convits ${ap_convits} \
+        --ap-algorithm ${ap_algorithm} \
+        --hotspot-distance ${hotspot_distance} \
+        --min-hs-vars ${min_hs_vars} \
+        --min-hs-samps ${min_hs_samps} \
+        --snps-only ${snps_only} \
+        --prefix ${prefix} \
+        --gene-field gene_name \
+        -o ./mutenricher
 
     cat <<-EOF > versions.yml
     "${task.process}":

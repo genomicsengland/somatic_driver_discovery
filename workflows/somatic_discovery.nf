@@ -143,8 +143,25 @@ workflow SOMATIC_DISCOVERY {
         if ( params.user_tool_params.run_mutenricher ){
 
             RUN_MUTENRICHER(
-            ch_symlinks,
-            params.variant_type
+                ch_symlinks,
+                params.variant_type,
+                params.user_tool_params.anno_type,
+                params.user_tool_params.gtf_gene_model_info,
+                params.user_tool_params.gene_list ?: "",
+                params.user_tool_params.covariates_file ?: "",
+                params.user_tool_params.weights ?: "",
+                params.user_tool_params.stat_type,
+                params.user_tool_params.background_mut_calc,
+                params.user_tool_params.min_clust_size,
+                params.user_tool_params.ap_iters,
+                params.user_tool_params.ap_convits,
+                params.user_tool_params.ap_algorithm,
+                params.user_tool_params.hotspot_distance,
+                params.user_tool_params.min_hs_vars,
+                params.user_tool_params.min_hs_samps,
+                params.user_tool_params.snps_only ?: "",
+                params.user_tool_params.blacklist ?: "",
+                params.user_tool_params.mut_prefix
             )
         }
 
@@ -172,6 +189,7 @@ workflow SOMATIC_DISCOVERY {
             RUN_ONCODRIVEFML.out.onco_enrichments,
             RUN_DNDSCV.out.dndscv_enrichments
             )
+            
     } else {
         RUN_MUTENRICHER(
             ch_symlinks,
