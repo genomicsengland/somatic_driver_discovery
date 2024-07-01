@@ -179,7 +179,22 @@ workflow SOMATIC_DISCOVERY {
         if (  params.user_tool_params.run_dndscv ){
 
             RUN_DNDSCV(
-            ch_aggregate
+            ch_aggregate,
+            params.user_tool_params.refdb ?: "",
+            params.user_tool_params.dndscv_gene_list ?: "",
+            params.user_tool_params.sm,
+            params.user_tool_params.kc ?: "",
+            params.user_tool_params.cv,
+            params.user_tool_params.max_muts_per_gene_per_sample,
+            params.user_tool_params.max_coding_muts_per_sample,
+            params.user_tool_params.use_indel_sites ?: "",
+            params.user_tool_params.min_indels,
+            params.user_tool_params.maxcovs,
+            params.user_tool_params.constrain_wnon_wspl ?: "",
+            params.user_tool_params.name,
+            params.user_tool_params.outp,
+            params.user_tool_params.numcode,
+            params.user_tool_params.mingenecovs
             )
         }
 
