@@ -10,6 +10,21 @@ process RUN_DNDSCV {
 
     input:
     path(aggregate)
+    val(refdb)
+    val(dndscv_gene_list)
+    val(sm)
+    val(kc)
+    val(cv)
+    val(max_muts_per_gene_per_sample)
+    val(max_coding_muts_per_sample)
+    val(use_indel_sites)
+    val(min_indels)
+    val(maxcovs)
+    val(constrain_wnon_wspl)
+    val(name)
+    val(outp)
+    val(numcode)
+    val(mingenecovs)
 
     output:
     path("./dndscv/dndscv"), emit: dndscv_enrichments
@@ -20,19 +35,22 @@ process RUN_DNDSCV {
    mkdir ./dndscv
 
     Rscript /usr/src/app/run_dndscv.R \
-    --ref /usr/src/app/data/RefCDS_human_GRCh38_GencodeV18_recommended.rda \
-    --varagg "${aggregate}" \
-    --out ./dndscv \
-    --subm 192r_3w \
-    --known_cancer_genes NULL \
-    --covariates covariates_hg19_hg38_epigenome_pcawg.rda \
-    --name dndscv \
-    --indels \
-    --maxmuts 3 \
-    --tmbmax 8000 \
-    --wnon_constrain
-
-
+    --varagg ${aggregate} \
+    ${dndscv_gene_list} \
+    --ref ${refdb} \
+    --subm ${sm} \
+    ${kc} \
+    --covariates ${cv} \
+    --maxmuts ${max_muts_per_gene_per_sample} \
+    --tmbmax ${max_coding_muts_per_sample} \
+    ${use_indel_sites} \
+    --mindels ${min_indels} \
+    --amaxcov ${maxcovs} \
+    ${constrain_wnon_wspl} \
+    --loc_sv_type ${outp} \
+    --gennum ${numcode} \
+    --mingenecovs ${mingenecovs} \
+    --out ./dndscv
 
     cat <<-EOF > versions.yml
     "${task.process}":
