@@ -138,8 +138,8 @@ def check_sample_file_provided(sample_file):
         print(error_message)
         exit(1)
 
-    samps = read_csv(sample_file)
-    if samps.shape[0] != 2:
+    samps = read_csv(sample_file, sep = "\t", header = None)
+    if samps.shape[1] != 2:
         error_message = textwrap.dedent(
             """
         Error:
