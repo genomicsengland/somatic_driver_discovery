@@ -69,7 +69,7 @@ fi
 # region file required here.
 while IFS=$'\t' read -r vcf_path sample_name
 do
-    bcftools query -e 'FILTER="PASS"' \
+    bcftools query -i 'FILTER="PASS"' \
     -R ${bedfile} \
     -f "%CHROM\t%POS\t%REF\t%ALT\t${sample_name}\n" $vcf_path >> ${OUT}
 done < ${inputvcfs}
