@@ -56,6 +56,7 @@ log.info("$params.user_tool_params")
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
+include { OFML_PARAMETERS } from "../modules/local/_ofml_parameters/ofml_parameters.py"
 include { RUN_MUTENRICHER } from "../modules/local/run_mutenricher/run_mutenricher.nf"
 include { RUN_ONCODRIVEFML } from "../modules/local/run_oncodrivefml/run_oncodrivefml.nf"
 include { RUN_DNDSCV } from "../modules/local/run_dndscv/run_dndscv.nf"
@@ -169,7 +170,58 @@ workflow SOMATIC_DISCOVERY {
         // or we could migrate them to public_data_resources?
         // right now hosted in /re_scratch/ which doesn't seem like a long term solution.
         if ( params.user_tool_params.run_oncodrivefml ){
-
+            OFML_PARAMETERS(
+                params.elements,
+                params.build,
+                params.signature_method,
+                params.signature_path ?: "",
+                params.signature_column_ref ?: "",
+                params.signature_column_alt ?: "",
+                params.signature_column_prob ?: "",
+                params.signature_column_classifier ?: "",
+                params.signature_normalise_by_sites
+                params.mutability_adjusting 
+                params.mutability_path
+                params.mutability_format
+                params.mutability_chr
+                params.mutability_chr_prefix
+                params.mutability_pos
+                params.mutability_ref
+                params.mutability_alt
+                params.mutability_mutab
+                params.depth_adjusting
+                params.depth_file
+                params.depth_format
+                params.depth_chr
+                params.depth_chr_prefix
+                params.depth_pos
+                params.depth_depth
+                params.score_file
+                params.score_format
+                params.score_chr
+                params.score_chr_prefix
+                params.score_pos
+                params.score_ref
+                params.score_alt
+                params.score_score
+                params.score_element
+                params.statistic_method
+                params.statistic_discard_mnp
+                params.statitsic_per_sample_analysis
+                params.statistic_sampling
+                params.statistic_sampling_max
+                params.statistic_sampling_chunk
+                params.statistic_sampling_min_obs
+                params.indels_include
+                params.indels_max_size
+                params.indels_method
+                params.indels_max_consecutive
+                params.indels_gene_exomic_frameshift_ratio
+                params.indels_stops_function
+                params.indels_minimum_number_of_stops
+                params.settings_cores
+                params.settings_seed
+            )
             RUN_ONCODRIVEFML(
             ch_aggregate,
             ch_region_file
