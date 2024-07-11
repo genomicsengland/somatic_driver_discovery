@@ -70,14 +70,13 @@ import os
 	default='./oncodrivefml_v2.conf')
 
 def main(*args, **kwargs):
-	print('someother print')
+	"""creates a TOML file with parameters passed from @click to kwargs.
+	Parameters that value as None are removed from the dictionary before 
+	parsing to TOML ouput.
+	"""
 	param_dictionary = ingest_params(kwargs)
-	print('Generated TOML configuration:', param_dictionary)
-
 	clean_param_dict = clean_dictionary(param_dictionary)
-	print('after_ingest TOML configuration:', clean_param_dict)
 	touch(kwargs['output'])
-	
 	with open(kwargs['output'], 'w') as f:
 		new_toml_string = toml.dump(clean_param_dict, f)
 
