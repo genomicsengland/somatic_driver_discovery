@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import click
 import toml
@@ -52,7 +53,7 @@ import os
 @click.option('--statistic_sampling_chunk', type=int, default=100)
 @click.option('--statistic_sampling_min_obs', type=int, default= 10)
 
-@click.option('--indels_include', is_flag=True, default=True)
+@click.option('--indels_include', is_flag=True, default=False)
 @click.option('--indels_max_size', type=int, default=20)
 @click.option('--indels_method', type=str, default='max')
 @click.option('--indels_max_consecutive', type=int, default=7)
@@ -66,8 +67,7 @@ import os
 @click.option(
 	'--output', 
 	type=str,
-	default='./test.toml')
-
+	default='./oncodrivefml_v2.conf')
 
 def main(*args, **kwargs):
 	print('someother print')
