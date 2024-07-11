@@ -15,14 +15,14 @@ module purge
 module load singularity/4.1.1 nextflow/23.10
 
 # VARIABLES TO EDIT PRIOR TO SUBMISSION
-DRIVER_DISCOVERY='/path/to/dir'
+DRIVER_DISCOVERY='/pgen_int_work/BRS/somatic_discovery'
 SCRATCHDIR='/re_scratch/path/to/dir'
 
 # RUN WORKFLOW
 nextflow run "${DRIVER_DISCOVERY}"/main.nf \
     --variant_type "coding" \
     --sample_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/input/min_luad_vcf.txt" \
-    --region_file "/pgen_int_work/BRS/cancer_dev/discovery/somatic_driver_discovery/resources/global/coding_CDS.tsv.gz" \
+    --region_file "/pgen_int_work/BRS/somatic_discovery/resources/global/coding_CDS.tsv.gz" \
     --scratchdir "${SCRATCHDIR}" \
     -c "${DRIVER_DISCOVERY}"/nextflow.config \
     -profile cluster
