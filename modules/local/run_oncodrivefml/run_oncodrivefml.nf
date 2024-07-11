@@ -11,6 +11,7 @@ process RUN_ONCODRIVEFML {
     input:
     path(aggregate)
 	val(region_file)
+    path(oncodrivefml_config)
 
     output:
     path("oncodrivefml/*oncodrivefml.tsv.gz"), emit: onco_enrichments
@@ -38,7 +39,7 @@ process RUN_ONCODRIVEFML {
     -i ${aggregate} \
     -o oncodrivefml/ \
     -e ${region_file} \
-    -c ${projectDir}/resources/oncodrivefml/oncodrivefml_v2.conf
+    -c ${oncodrivefml_config}
 
 
     cat <<-EOF > versions.yml

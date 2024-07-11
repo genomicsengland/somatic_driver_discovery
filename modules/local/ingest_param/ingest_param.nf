@@ -3,10 +3,6 @@ process INGEST_PARAM {
         take oncodrivefml parameters and create TOML file named: oncodrivefml_v2.conf
 
     */
-    // publishDir (
-    //     "${params.outdir}",
-    //     mode: 'copy',
-    // )
 
     input:
     val(build)
@@ -16,7 +12,7 @@ process INGEST_PARAM {
     val(signature_column_alt)
     val(signature_column_prob)
     val(signature_column_classifier)
-    val(signature_normalise_by_sites)
+    val(signature_normalize_by_sites)
     val(mutability_adjusting)
     val(mutability_file)
     val(mutability_format)
@@ -58,7 +54,6 @@ process INGEST_PARAM {
     val(indels_minimum_number_of_stops)
     val(settings_cores)
     val(settings_seed)
-
 
     output:
     path("./oncodrivefml_v2.conf"), emit: oncodrivefml_config

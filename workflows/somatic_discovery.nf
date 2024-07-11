@@ -170,6 +170,7 @@ workflow SOMATIC_DISCOVERY {
         // or we could migrate them to public_data_resources?
         // right now hosted in /re_scratch/ which doesn't seem like a long term solution.
         if ( params.user_tool_params.run_oncodrivefml ){
+        if ( params.user_tool_params.run_oncodrivefml ){
             INGEST_PARAM(
                 params.user_tool_params.build,
                 params.user_tool_params.signature_method,
@@ -219,11 +220,12 @@ workflow SOMATIC_DISCOVERY {
                 params.user_tool_params.indels_stops_function,
                 params.user_tool_params.indels_minimum_number_of_stops ?: "",
                 params.user_tool_params.settings_cores ?: "",
-                params.user_tool_params.settings_seed
+                params.user_tool_params.setting
             )
             RUN_ONCODRIVEFML(
             ch_aggregate,
-            ch_region_file
+            ch_region_file,
+            INGEST_PARAM.out.oncodrivefml_config
             )
         }
 
