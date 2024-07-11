@@ -50,7 +50,7 @@ import os
 @click.option('--statistic_sampling', type=int, default=100000)
 @click.option('--statistic_sampling_max', type=int, default=1000000)
 @click.option('--statistic_sampling_chunk', type=int, default=100)
-@click.option('--statistic_min_obs', type=int, default= 10)
+@click.option('--statistic_sampling_min_obs', type=int, default= 10)
 
 @click.option('--indels_include', is_flag=True, default=True)
 @click.option('--indels_max_size', type=int, default=20)
@@ -58,7 +58,7 @@ import os
 @click.option('--indels_max_consecutive', type=int, default=7)
 @click.option('--indels_gene_exomic_frameshift_ratio', is_flag=True, default=False)
 @click.option('--indels_stops_function', type=str, default='mean')
-@click.option('--indels_min_stops', type=int, default=None)
+@click.option('--indels_minimum_number_of_stops', type=int, default=None)
 
 @click.option('--settings_core', type=int, default=None)
 @click.option('--settings_seed', type=int, default=None)
@@ -138,7 +138,7 @@ def ingest_params(kargs):
 		'sampling':kargs['statistic_sampling'],
 		'sampling_max':kargs['statistic_sampling_max'],
 		'sampling_chunk':kargs['statistic_sampling_chunk'],
-		'sampling_min_obs':kargs['statistic_min_obs'],
+		'sampling_min_obs':kargs['statistic_sampling_min_obs'],
 	}
 
 	toml_dictionary['indels'] = {
@@ -148,7 +148,7 @@ def ingest_params(kargs):
 		'max_consecutive':kargs['indels_max_consecutive'],
 		'gene_exomic_frameshift_ratio':kargs['indels_gene_exomic_frameshift_ratio'],
 		'stops_function':kargs['indels_stops_function'],
-		'minimum_number_of_stops':kargs['indels_min_stops']
+		'minimum_number_of_stops':kargs['indels_minimum_number_of_stops']
 	}
 	toml_dictionary['settings'] = {
 		'cores':kargs['settings_core'],
