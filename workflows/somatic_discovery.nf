@@ -178,7 +178,7 @@ workflow SOMATIC_DISCOVERY {
                 params.user_tool_params.signature_column_alt ?: "",
                 params.user_tool_params.signature_column_prob ?: "",
                 params.user_tool_params.signature_column_classifier ?: "",
-                params.user_tool_params.signature_normalise_by_sites,
+                params.user_tool_params.signature_normalize_by_sites,
                 params.user_tool_params.mutability_adjusting,
                 params.user_tool_params.mutability_file ?: "",
                 params.user_tool_params.mutability_format ?: "",
