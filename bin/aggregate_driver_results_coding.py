@@ -9,93 +9,32 @@ import pandas as pd
 
 def main(args):
 
-	# Convert each results file to pandas dataframe and harmonise gene_id columns
-	dndscv_results = pd.read_csv(
-		args.dndscv,
-		sep='\t',
-		 header=0)
-	dndscv_results = dndscv_results.rename(
-		columns={"gene_name": "gene"}
-		)
+	combined_df = pd.DataFrame()
 
-	mutenricher_results = pd.read_csv(
-		args.mutenricher,
-		sep='\t',
-		header=0)
-	mutenricher_results = mutenricher_results.rename(
-		columns={"Gene": "gene"}
-		)
+	if args.dndscv is not None:
+		dndscv_results = pd.read_csv(args.dndscv, sep='\t', header=0)
+		dndscv_results = dndscv_results.rename(columns={"gene_name": "gene", 'pglobal_cv':'dndscv_pvalue', 'qglobal_cv':'dndscv_qvalue'})
+		combined_df = dndscv_results if combined_df.empty else combined_df.merge(dndscv_results, on='gene', how='outer')
 
-	oncodrivefml_results = pd.read_csv(
-		args.oncodrivefml,
-		sep='\t',
-		header=0
-		)
-	oncodrivefml_results = oncodrivefml_results.rename(
-		columns={"SYMBOL": "gene", "GENE_ID": "gene_id"}
-		)
+	if args.mutenricher is not None:
+		mutenricher_results = pd.read_csv(args.mutenricher, sep='\t', header=0)
+		mutenricher_results = mutenricher_results.rename(columns={"Gene": "gene", 'Fisher_pval':'mutenricher_fisher_pvalue', 'Fisher_FDR':'mutenricher_fisher_qvalue'})
+		combined_df = mutenricher_results if combined_df.empty else combined_df.merge(mutenricher_results, on='gene', how='outer')
 
-	# Merge dataframes
-	merged_df = (dndscv_results
-		.merge(
-			mutenricher_results,
-			how='outer', 
-			left_on='gene', 
-			right_on='gene'
-			)
-		.merge(
-			oncodrivefml_results, 
-			how='outer', 
-			left_on='gene', 
-			right_on='gene'
-			)
-		.sort_values(by=['gene'])
-		)
+	if args.oncodrivefml is not None:
+		oncodrivefml_results = pd.read_csv(args.oncodrivefml, sep='\t', header=0)
+		oncodrivefml_results = oncodrivefml_results.rename(columns={"SYMBOL": "gene", "GENE_ID": "gene_id", 'P_VALUE':'oncodrivefml_pvalue', 'Q_VALUE': 'oncodrivefml_qvalue'})
+		combined_df = oncodrivefml_results if combined_df.empty else combined_df.merge(oncodrivefml_results, on='gene', how='outer')
 
-	pval_df = (
-		merged_df[[
-			'gene',
-			'gene_id',
-			'pglobal_cv',
-			'qglobal_cv',
-			'Fisher_pval',
-			'Fisher_FDR',
-			'P_VALUE',
-			'Q_VALUE'
-			]]
-		.rename(
-			columns={
-				'pglobal_cv':'dndscv_pval', 
-				'qglobal_cv':'dndscv_qval'
-				})
-		.rename(
-			columns={
-				'Fisher_pval':'mutenricher_fisher_pval',
-				'Fisher_FDR':'mutenricher_fisher_fdr_pval'
-				})
-		.rename(
-			columns={
-				'P_VALUE':'oncodrivefml_pval',
-				'Q_VALUE': 'oncodrivefml_qval'
-				})
-		.reset_index(drop=True))
+	pval_df = combined_df[['gene'] + combined_df.filter(regex='pvalue|qvalue').columns.tolist()]
+	pval_df.to_csv('combined_significance_results.tsv', sep='\t', index=False)
 
-	# Filter by multi-test corrected pvals
-	narrow_results = pval_df.loc[(
-		(pval_df['dndscv_qval']<0.05) 
-		& (pval_df["mutenricher_fisher_fdr_pval"]<0.05) 
-		& (pval_df['oncodrivefml_qval']<0.05)
-		)]
-	wide_results = pval_df.loc[(
-		(pval_df['dndscv_qval']<0.05) 
-		| (pval_df["mutenricher_fisher_fdr_pval"]<0.05) 
-		| (pval_df['oncodrivefml_qval']<0.05)
-		)]
+	qvalue_columns = [col for col in pval_df.columns if 'qvalue' in col]
+	narrow_results = pval_df[(pval_df[qvalue_columns] < 0.05).all(axis=1)]
+	narrow_results.to_csv('narrow_significant_results.tsv', sep='\t', index=False)
 
-	# Output TSVs
-	pval_df.to_csv('coding_complete_results.tsv', sep='\t', index=False)
-	narrow_results.to_csv('coding_narrow_results.tsv', sep='\t', index=False)
-	wide_results.to_csv('coding_wide_results.tsv', sep='\t', index=False)
+	wide_results = pval_df[(pval_df[qvalue_columns] < 0.05).any(axis=1)]
+	wide_results.to_csv('wide_significant_results.tsv', sep='\t', index=False)
 
 ### RUN WITH ARGS ###
 

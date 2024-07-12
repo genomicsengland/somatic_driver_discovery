@@ -56,9 +56,9 @@ log.info("$params.user_tool_params")
 include { VALIDATE_ARGS } from "../modules/local/validate_args/validate_args.nf"
 include { INDEX_VCFS } from "../modules/local/index_vcfs/index_vcfs.nf"
 include { VARIANT_FILTER } from "../modules/local/variant_filter/variant_filter.nf"
-include { INGEST_PARAM } from "../modules/local/_ofml_parameters/ofml_parameters.py"
+include { INGEST_PARAM } from "../modules/local/ingest_param/ingest_param.nf"
 include { RUN_MUTENRICHER } from "../modules/local/run_mutenricher/run_mutenricher.nf"
-include { RUN_ONCODRIVEFML } from "../modules/local/ingest_param/ingest_param.nf"
+include { RUN_ONCODRIVEFML } from "../modules/local/run_oncodrivefml/run_oncodrivefml.nf"
 include { RUN_DNDSCV } from "../modules/local/run_dndscv/run_dndscv.nf"
 include { COMBINE_OUTPUT_CODING} from "../modules/local/combine_output/combine_output.nf"
 // include { CLEAN_SCRATCH } from "../modules/local/clean_scratch/clean_scratch.nf"
@@ -164,12 +164,15 @@ workflow SOMATIC_DISCOVERY {
                 params.user_tool_params.blacklist ?: "",
                 params.user_tool_params.mut_prefix
             )
+            ch_mutenricher_results = RUN_MUTENRICHER.out.me_fisher_enrichments
+        } 
+        else {
+            ch_mutenricher_results = Channel.value([])
         }
 
         // oncodriveFML has some additional folder structure etc that needs to be accessed. Worth including those in the singularity container?
         // or we could migrate them to public_data_resources?
         // right now hosted in /re_scratch/ which doesn't seem like a long term solution.
-        if ( params.user_tool_params.run_oncodrivefml ){
         if ( params.user_tool_params.run_oncodrivefml ){
             INGEST_PARAM(
                 params.user_tool_params.build,
@@ -220,13 +223,17 @@ workflow SOMATIC_DISCOVERY {
                 params.user_tool_params.indels_stops_function,
                 params.user_tool_params.indels_minimum_number_of_stops ?: "",
                 params.user_tool_params.settings_cores ?: "",
-                params.user_tool_params.setting
+                params.user_tool_params.settings_seed
             )
             RUN_ONCODRIVEFML(
             ch_aggregate,
             ch_region_file,
             INGEST_PARAM.out.oncodrivefml_config
             )
+            ch_oncodrive_results = RUN_ONCODRIVEFML.out.onco_enrichments
+        } 
+        else {
+            ch_oncodrive_results = Channel.value([])
         }
 
         if (  params.user_tool_params.run_dndscv ){
@@ -248,14 +255,18 @@ workflow SOMATIC_DISCOVERY {
             params.user_tool_params.outp,
             params.user_tool_params.numcode,
             params.user_tool_params.mingenecovs
-            )
+            ) 
+            ch_dndscv_results = RUN_DNDSCV.out.dndscv_enrichments
+        } 
+        else {
+            ch_dndscv_results = Channel.value([])
         }
 
         // combine the outputs of the different tools
         COMBINE_OUTPUT_CODING(
-            RUN_MUTENRICHER.out.me_fisher_enrichments,
-            RUN_ONCODRIVEFML.out.onco_enrichments,
-            RUN_DNDSCV.out.dndscv_enrichments
+            ch_mutenricher_results,
+            ch_oncodrive_results,
+            ch_dndscv_results
             )
             
     } else {
