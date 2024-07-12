@@ -12,16 +12,18 @@ process COMBINE_OUTPUT_CODING {
     path(dndscv_enrichments)
 
     output:
-    path('coding_narrow_results.tsv')
-    path('coding_wide_results.tsv')
-    path('coding_complete_results.tsv')
+    path('narrow_significant_results.tsv')
+    path('wide_significant_results.tsv')
+    path('combined_significance_results.tsv')
 
     script:
+    def args = []
+    if (dndscv_enrichments) args << "--dndscv ${dndscv_enrichments}"
+    if (me_fisher_enrichments) args << "--mutenricher ${me_fisher_enrichments}"
+    if (onco_enrichments) args << "--oncodrivefml ${onco_enrichments}"
     """
-    aggregate_driver_results_coding.py \
-        --dndscv ${dndscv_enrichments} \
-        --mutenricher ${me_fisher_enrichments} \
-        --oncodrivefml ${onco_enrichments}
+    echo ${args}
+    aggregate_driver_results_coding.py ${args.join(' ')}
     """
 }
 
