@@ -17,10 +17,9 @@ cp /pgen_int_work/BRS/somatic_discovery/submit.sh .
 Make a tab delimited file with your cohort of interest. This file should contain two columns and no header. The first column must have a VCF path while the second column the sample platekey. You can find an example here: `/pgen_int_work/BRS/somatic_discovery/example/luad_lusc_example_samples.txt`.
 
 ```
-/gel_data_resources/main_programme/normalised_vcf_cancer_dragen/GRCh38/20220930/annotated_vcf/LP3001572-DNA_F02_LP3001546-DNA_F06.vcf.gz        LP3001546-DNA_F06
-/gel_data_resources/main_programme/normalised_vcf_cancer_dragen/GRCh38/20220930/annotated_vcf/LP3000944-DNA_H07_LP3000947-DNA_E05.vcf.gz        LP3000947-DNA_E05
-/gel_data_resources/main_programme/normalised_vcf_cancer_dragen/GRCh38/20220930/annotated_vcf/LP3001113-DNA_E09_LP3001153-DNA_E11.vcf.gz        LP3001153-DNA_E11
-/gel_data_resources/main_programme/normalised_vcf_cancer_dragen/GRCh38/20220930/annotated_vcf/LP3000554-DNA_H10_LP3000555-DNA_C11.vcf.gz        LP3000555-DNA_C11
+/path/to/VCF/sample_platekey_1.vcf.gz        sample_platekey_1
+/path/to/VCF/sample_platekey_2.vcf.gz        sample_platekey_2
+/path/to/VCF/sample_platekey_3.vcf.gz        sample_platekey_3
 ...
 ```
 
